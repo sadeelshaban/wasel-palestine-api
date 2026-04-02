@@ -1,0 +1,192 @@
+/* Wasel Palestine — custom Swagger UI theme (reference layout) */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+.swagger-ui {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Remove default green top bar */
+.swagger-ui .topbar {
+  display: none;
+}
+
+.swagger-ui .wrapper {
+  padding: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Title block */
+.swagger-ui .info {
+  margin: 28px 0 20px;
+  padding: 0 8px;
+}
+
+.swagger-ui .info .title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #141414;
+  letter-spacing: -0.02em;
+}
+
+.swagger-ui .info .title small {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5c5c5c;
+}
+
+.swagger-ui .info .description,
+.swagger-ui .info .markdown p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3d3d3d;
+}
+
+.swagger-ui .info .base-url {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: #444;
+  background: #f4f4f5;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+/* Section tags */
+.swagger-ui .opblock-tag {
+  font-size: 17px;
+  font-weight: 600;
+  color: #141414;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 16px 8px 12px;
+  margin: 24px 0 0;
+}
+
+.swagger-ui .opblock-tag svg {
+  fill: #141414;
+}
+
+/* Operation rows — method colors */
+.swagger-ui .opblock {
+  border-radius: 6px;
+  margin: 0 0 10px;
+  box-shadow: none;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.swagger-ui .opblock .opblock-summary {
+  border: none;
+  padding: 10px 14px;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 52px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px 8px;
+  color: #fff !important;
+}
+
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__normalized {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a !important;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+  font-size: 13px;
+  color: #555;
+  font-weight: 400;
+}
+
+/* GET — dark green */
+.swagger-ui .opblock.opblock-get {
+  border-color: #2e7d32;
+  background: #fafcfa;
+}
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background: #1b5e20 !important;
+}
+
+/* POST — dark blue */
+.swagger-ui .opblock.opblock-post {
+  border-color: #1565c0;
+  background: #f8fafc;
+}
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background: #0d47a1 !important;
+}
+
+/* PUT / PATCH — orange-brown */
+.swagger-ui .opblock.opblock-put {
+  border-color: #e65100;
+  background: #fffaf5;
+}
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+  background: #bf360c !important;
+}
+
+.swagger-ui .opblock.opblock-patch {
+  border-color: #e65100;
+  background: #fffaf5;
+}
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background: #bf360c !important;
+}
+
+/* DELETE — dark red */
+.swagger-ui .opblock.opblock-delete {
+  border-color: #c62828;
+  background: #fff8f8;
+}
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background: #b71c1c !important;
+}
+
+/* Authorize button — admin-style accent */
+.swagger-ui .btn.authorize {
+  border-color: #5e35b1;
+  color: #5e35b1;
+  font-weight: 600;
+  border-radius: 20px;
+}
+.swagger-ui .btn.authorize svg {
+  fill: #5e35b1;
+}
+
+/* Filter box */
+.swagger-ui .filter-container input {
+  border-radius: 8px;
+  border: 1px solid #d0d0d0;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin: 8px 0 16px;
+}
+
+/* Models / schemas */
+.swagger-ui section.models {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+}
+
+.swagger-ui .model-box {
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+/* Try it out */
+.swagger-ui .btn.execute {
+  background-color: #1565c0;
+  border-color: #1565c0;
+}
+
+.swagger-ui .response-col_status {
+  font-family: 'IBM Plex Mono', monospace;
+}
