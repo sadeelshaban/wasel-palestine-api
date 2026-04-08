@@ -5,6 +5,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { CheckpointsModule } from './modules/checkpoints/checkpoints.module';
+import { IncidentsModule } from './modules/incidents/incidents.module';
 
 @Module({
   imports: [
@@ -12,8 +14,11 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     AdminModule,
+    CheckpointsModule,
+    IncidentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+
