@@ -63,3 +63,60 @@ enum Role {
   USER
   ADMIN
 }
+
+enum CheckpointStatus {
+  OPEN
+  CLOSED
+  UNKNOWN
+}
+
+
+
+model Checkpoint {
+  id        String   @id @default(uuid())
+  name      String
+  latitude  Float
+  longitude Float
+  status    CheckpointStatus
+  createdAt DateTime @default(now())
+
+  statusHistory CheckpointStatusHistory[]
+  incidents     Incident[]
+}
+
+model CheckpointStatusHistory {
+  id           String           @id @default(uuid())
+  checkpointId String
+  status       CheckpointStatus
+  createdAt    DateTime         @default(now())
+
+  checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+}
+
+
+enum IncidentStatus {
+  OPEN
+  VERIFIED
+  CLOSED
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Incident {
+  id           String   @id @default(uuid())
+  type         String
+  severity     IncidentSeverity
+  status       IncidentStatus
+  description  String
+  latitude     Float
+  longitude    Float
+  checkpointId String?
+
+  createdAt DateTime @default(now())
+
+  checkpoint Checkpoint? @relation(fields: [checkpointId], references: [id])
+}
