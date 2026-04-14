@@ -1,10 +1,14 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { IncidentSeverity, IncidentStatus } from '@prisma/client';
+import { AlertsService } from '../../alerts/alerts.service';
 
 @Injectable()
 export class IncidentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly alertsService: AlertsService,
+  ) {}
 
   async create(data: {
     type: string;
@@ -51,10 +55,13 @@ export class IncidentsService {
 
   async verify(id: string) {
     try {
-      return await this.prisma.incident.update({
+      const incident = await this.prisma.incident.update({
         where: { id },
         data: { status: 'VERIFIED' },
       });
+
+      await this.alertsService.generateAlertsForVerifiedIncident(incident.id);
+      return incident;
     } catch (err) {
       throw new HttpException(
         `Incident with id ${id} not found`,

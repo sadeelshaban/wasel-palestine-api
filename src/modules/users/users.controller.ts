@@ -107,8 +107,12 @@ export class UsersController {
     const take = Math.min(100, Math.max(1, parseInt(takeRaw ?? '20', 10) || 20));
     let role: Role | undefined;
     if (roleRaw !== undefined && roleRaw !== '') {
-      if (roleRaw !== Role.USER && roleRaw !== Role.ADMIN) {
-        throw new BadRequestException('role must be USER or ADMIN');
+      if (
+        roleRaw !== Role.USER &&
+        roleRaw !== Role.MODERATOR &&
+        roleRaw !== Role.ADMIN
+      ) {
+        throw new BadRequestException('role must be USER, MODERATOR, or ADMIN');
       }
       role = roleRaw as Role;
     }
