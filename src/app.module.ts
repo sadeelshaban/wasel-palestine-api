@@ -7,6 +7,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CheckpointsModule } from './modules/checkpoints/checkpoints.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
+import { ReportsModule } from './reports/reports.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
     AdminModule,
     CheckpointsModule,
     IncidentsModule,
+    ReportsModule,
+    AlertsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
