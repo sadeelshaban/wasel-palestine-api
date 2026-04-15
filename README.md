@@ -42,7 +42,10 @@ cp .env.example .env
 docker-compose up -d
 
 # Run database migrations
-npx prisma migrate dev
+npx prisma migrate dev --name init_full_system
+
+# Generate Prisma client
+npx prisma generate
 
 # Seed admin user
 npm run db:seed

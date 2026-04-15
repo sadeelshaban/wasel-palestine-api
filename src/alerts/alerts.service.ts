@@ -1,6 +1,8 @@
 import {
+	BadRequestException,
 	ForbiddenException,
 	Injectable,
+	Logger,
 	NotFoundException,
 } from '@nestjs/common';
 import { IncidentStatus, Prisma } from '@prisma/client';
@@ -11,18 +13,52 @@ import { ListSubscriptionsDto } from './dto/list-subscriptions.dto';
 import { MarkAlertReadDto } from './dto/mark-alert-read.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 
+const MAX_SUBSCRIPTION_RADIUS_METERS = 50000;
+
 @Injectable()
 export class AlertsService {
+	private readonly logger = new Logger(AlertsService.name);
+
 	constructor(private readonly prisma: PrismaService) {}
 
+	private normalizeCategory(category?: string | null): string | undefined {
+		const normalized = category?.trim();
+		return normalized ? normalized : undefined;
+	}
+
+	private ensureReasonableRadius(radiusMeters?: number) {
+		if (radiusMeters === undefined) {
+			return;
+		}
+
+		if (radiusMeters > MAX_SUBSCRIPTION_RADIUS_METERS) {
+			throw new BadRequestException(
+				`radiusMeters must be <= ${MAX_SUBSCRIPTION_RADIUS_METERS}`,
+			);
+		}
+	}
+
+	private async publishAlertEvents(alerts: Array<{ userId: string; incidentId: string }>) {
+		if (!alerts.length) {
+			return;
+		}
+
+		// Placeholder for future push/websocket integration.
+		this.logger.debug(
+			`Queued ${alerts.length} alert notifications for incident ${alerts[0].incidentId}`,
+		);
+	}
+
 	async subscribe(userId: string, dto: CreateSubscriptionDto) {
+		this.ensureReasonableRadius(dto.radiusMeters);
+
 		const created = await this.prisma.subscription.create({
 			data: {
 				userId,
 				latitude: dto.latitude,
 				longitude: dto.longitude,
 				radiusMeters: dto.radiusMeters,
-				category: dto.category,
+				category: this.normalizeCategory(dto.category),
 			},
 		});
 		return { message: 'Subscription created', data: created };
@@ -35,7 +71,10 @@ export class AlertsService {
 
 		const where: Prisma.SubscriptionWhereInput = { userId };
 		if (query.category) {
-			where.category = query.category;
+			where.category = {
+				equals: query.category,
+				mode: 'insensitive',
+			};
 		}
 
 		const [items, total] = await Promise.all([
@@ -64,6 +103,8 @@ export class AlertsService {
 		id: string,
 		dto: UpdateSubscriptionDto,
 	) {
+		this.ensureReasonableRadius(dto.radiusMeters);
+
 		const existing = await this.prisma.subscription.findUnique({ where: { id } });
 		if (!existing) {
 			throw new NotFoundException('Subscription not found');
@@ -78,7 +119,9 @@ export class AlertsService {
 				...(dto.latitude !== undefined && { latitude: dto.latitude }),
 				...(dto.longitude !== undefined && { longitude: dto.longitude }),
 				...(dto.radiusMeters !== undefined && { radiusMeters: dto.radiusMeters }),
-				...(dto.category !== undefined && { category: dto.category }),
+				...(dto.category !== undefined && {
+					category: this.normalizeCategory(dto.category),
+				}),
 			},
 		});
 
@@ -106,7 +149,10 @@ export class AlertsService {
 		const where: Prisma.AlertWhereInput = { userId };
 		if (query.category) {
 			where.incident = {
-				type: query.category,
+				type: {
+					equals: query.category,
+					mode: 'insensitive',
+				},
 			};
 		}
 
@@ -133,6 +179,13 @@ export class AlertsService {
 			this.prisma.alert.count({ where }),
 		]);
 
+		const unreadCount = await this.prisma.alert.count({
+			where: {
+				userId,
+				isRead: false,
+			},
+		});
+
 		return {
 			data: items,
 			meta: {
@@ -140,6 +193,7 @@ export class AlertsService {
 				page,
 				limit,
 				totalPages: Math.ceil(total / limit),
+				unreadCount,
 			},
 		};
 	}
@@ -166,6 +220,13 @@ export class AlertsService {
 	async generateAlertsForVerifiedIncident(incidentId: string) {
 		const incident = await this.prisma.incident.findUnique({
 			where: { id: incidentId },
+			select: {
+				id: true,
+				type: true,
+				status: true,
+				latitude: true,
+				longitude: true,
+			},
 		});
 		if (!incident) {
 			throw new NotFoundException('Incident not found');
@@ -183,15 +244,17 @@ export class AlertsService {
 			WHERE
 				(
 					s.category IS NOT NULL
-					AND s.category = ${incident.type}
+					AND lower(trim(s.category)) = lower(trim(${incident.type}))
 				)
 				OR
 				(
 					6371000 * acos(
-						cos(radians(${incident.latitude}))
-						* cos(radians(s.latitude))
-						* cos(radians(s.longitude) - radians(${incident.longitude}))
-						+ sin(radians(${incident.latitude})) * sin(radians(s.latitude))
+						LEAST(1.0, GREATEST(-1.0,
+							cos(radians(${incident.latitude}))
+							* cos(radians(s.latitude))
+							* cos(radians(s.longitude) - radians(${incident.longitude}))
+							+ sin(radians(${incident.latitude})) * sin(radians(s.latitude))
+						))
 					)
 				) <= s."radiusMeters"
 		`;
@@ -203,16 +266,19 @@ export class AlertsService {
 			};
 		}
 
-		const message = `Verified incident (${incident.type}) near your subscribed area or category.`;
+		const message = `New incident near your area: ${incident.type}`;
+		const alertRows = matchedUsers.map((row) => ({
+			userId: row.userId,
+			incidentId: incident.id,
+			message,
+		}));
 
 		const result = await this.prisma.alert.createMany({
-			data: matchedUsers.map((row) => ({
-				userId: row.userId,
-				incidentId: incident.id,
-				message,
-			})),
+			data: alertRows,
 			skipDuplicates: true,
 		});
+
+		void this.publishAlertEvents(alertRows);
 
 		return {
 			message: 'Alerts generated for verified incident',
