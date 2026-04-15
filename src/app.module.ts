@@ -1,3 +1,5 @@
+import { ExternalModule } from './external/external.module';
+import { RouteEstimationModule } from './route-estimation/route-estimation.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,9 +22,10 @@ import { AlertsModule } from './alerts/alerts.module';
     IncidentsModule,
     ReportsModule,
     AlertsModule,
+    ExternalModule,
+    RouteEstimationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
