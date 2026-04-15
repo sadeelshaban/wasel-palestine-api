@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
@@ -10,6 +10,8 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AppModule } from './app.module';
+
+dotenv.config({ path: '.env', override: true });
 
 const TAG_ORDER = ['Authentication', 'Users', 'Admin', 'Health'];
 
