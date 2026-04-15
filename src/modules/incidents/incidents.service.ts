@@ -22,22 +22,29 @@ export class IncidentsService {
     return this.prisma.incident.create({ data });
   }
 
-  async findAll(params: { page?: number; limit?: number }) {
-    const { page = 1, limit = 10 } = params;
-    const skip = (page - 1) * limit;
+    async findAll(params: { page?: number; limit?: number }) {
+    const page = Number(params?.page ?? 1);
+    const limit = Number(params?.limit ?? 10);
+
+    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 10;
+
+    const skip = (safePage - 1) * safeLimit;
     const total = await this.prisma.incident.count();
+
     const data = await this.prisma.incident.findMany({
       skip,
-      take: limit,
+      take: safeLimit,
       orderBy: { createdAt: 'desc' },
     });
+
     return {
       data,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.ceil(total / safeLimit),
       },
     };
   }
