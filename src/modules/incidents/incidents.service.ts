@@ -1,10 +1,18 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { IncidentSeverity, IncidentStatus } from '@prisma/client';
 import { AlertsService } from '../../alerts/alerts.service';
 
 @Injectable()
 export class IncidentsService {
+  private readonly logger = new Logger(IncidentsService.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly alertsService: AlertsService,
@@ -19,7 +27,20 @@ export class IncidentsService {
     status: IncidentStatus;
     checkpointId?: string;
   }) {
-    return this.prisma.incident.create({ data });
+    const incident = await this.prisma.incident.create({ data });
+
+    if (incident.status === IncidentStatus.VERIFIED) {
+      void this.alertsService
+        .generateAlertsForVerifiedIncident(incident.id)
+        .catch((error: unknown) => {
+          this.logger.error(
+            `Failed to generate alerts for incident ${incident.id}`,
+            error instanceof Error ? error.stack : String(error),
+          );
+        });
+    }
+
+    return incident;
   }
 
   async findAll(params: { page?: number; limit?: number }) {
@@ -54,34 +75,44 @@ export class IncidentsService {
   }
 
   async verify(id: string) {
-    try {
-      const incident = await this.prisma.incident.update({
-        where: { id },
-        data: { status: 'VERIFIED' },
-      });
-
-      await this.alertsService.generateAlertsForVerifiedIncident(incident.id);
-      return incident;
-    } catch (err) {
+    const incident = await this.prisma.incident.findUnique({ where: { id } });
+    if (!incident) {
       throw new HttpException(
         `Incident with id ${id} not found`,
         HttpStatus.NOT_FOUND,
       );
     }
+
+    const updatedIncident =
+      incident.status === IncidentStatus.VERIFIED
+        ? incident
+        : await this.prisma.incident.update({
+            where: { id },
+            data: { status: IncidentStatus.VERIFIED },
+          });
+
+    void this.alertsService
+      .generateAlertsForVerifiedIncident(updatedIncident.id)
+      .catch((error: unknown) => {
+        this.logger.error(
+          `Failed to generate alerts for incident ${updatedIncident.id}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
+
+    return updatedIncident;
   }
 
 
   async close(id: string) {
-    try {
-      return await this.prisma.incident.update({
-        where: { id },
-        data: { status: 'CLOSED' },
-      });
-    } catch (err) {
-      throw new HttpException(
-        `Incident with id ${id} not found`,
-        HttpStatus.NOT_FOUND,
-      );
+    const exists = await this.prisma.incident.findUnique({ where: { id } });
+    if (!exists) {
+      throw new NotFoundException(`Incident with id ${id} not found`);
     }
+
+    return this.prisma.incident.update({
+      where: { id },
+      data: { status: IncidentStatus.CLOSED },
+    });
   }
 }

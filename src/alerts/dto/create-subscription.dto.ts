@@ -21,7 +21,7 @@ export class CreateSubscriptionDto {
   @Type(() => Number)
   @IsNumber()
   @Min(100)
-  @Max(100000)
+  @Max(50000)
   radiusMeters: number;
 
   @ApiPropertyOptional({ example: 'TRAFFIC', description: 'Matches incident.type' })
