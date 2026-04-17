@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CheckpointStatus } from '@prisma/client';
+import { CheckpointStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CheckpointsService {
@@ -10,55 +10,102 @@ export class CheckpointsService {
     name: string;
     latitude: number;
     longitude: number;
-    status: CheckpointStatus; 
+    status: CheckpointStatus;
   }) {
+    if (data.latitude < -90 || data.latitude > 90) {
+      throw new HttpException('Invalid latitude', HttpStatus.BAD_REQUEST);
+    }
+
+    if (data.longitude < -180 || data.longitude > 180) {
+      throw new HttpException('Invalid longitude', HttpStatus.BAD_REQUEST);
+    }
+
     return this.prisma.checkpoint.create({
       data,
     });
   }
 
-  async findAll(page = 1, limit = 10) {
-  const skip = (page - 1) * limit;
+  async findAll(page = 1, limit = 10, status?: CheckpointStatus) {
+    const skip = (page - 1) * limit;
 
-  const [data, total] = await Promise.all([
-    this.prisma.checkpoint.findMany({
-      skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    }),
-    this.prisma.checkpoint.count(),
-  ]);
+    const where: Prisma.CheckpointWhereInput = {
+      ...(status && { status }),
+    };
 
-  return {
-    data,
-    total,
-    page,
-    lastPage: Math.ceil(total / limit),
-  };
-}
+    const [data, total] = await Promise.all([
+      this.prisma.checkpoint.findMany({
+        skip,
+        take: limit,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.checkpoint.count({ where }),
+    ]);
 
-  async findOne(id: string) {
-    return this.prisma.checkpoint.findUnique({
-      where: { id },
-    });
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async update(id: string, data: Partial<{
-    name: string;
-    latitude: number;
-    longitude: number;
-    status: CheckpointStatus;
-  }>) {
-    return this.prisma.checkpoint.update({
+  async findOne(id: string) {
+    const checkpoint = await this.prisma.checkpoint.findUnique({
       where: { id },
-      data,
     });
+
+    if (!checkpoint) {
+      throw new HttpException('Checkpoint not found', HttpStatus.NOT_FOUND);
+    }
+
+    return checkpoint;
+  }
+
+  async update(
+    id: string,
+    data: Partial<{
+      name: string;
+      latitude: number;
+      longitude: number;
+      status: CheckpointStatus;
+    }>,
+  ) {
+    if (
+      data.latitude !== undefined &&
+      (data.latitude < -90 || data.latitude > 90)
+    ) {
+      throw new HttpException('Invalid latitude', HttpStatus.BAD_REQUEST);
+    }
+
+    if (
+      data.longitude !== undefined &&
+      (data.longitude < -180 || data.longitude > 180)
+    ) {
+      throw new HttpException('Invalid longitude', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      return await this.prisma.checkpoint.update({
+        where: { id },
+        data,
+      });
+    } catch (err) {
+      throw new HttpException('Checkpoint not found', HttpStatus.NOT_FOUND);
+    }
   }
 
   async remove(id: string) {
-    return this.prisma.checkpoint.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.checkpoint.delete({
+        where: { id },
+      });
+    } catch (err) {
+      throw new HttpException('Checkpoint not found', HttpStatus.NOT_FOUND);
+    }
   }
 
   async getHistory(id: string) {
@@ -69,12 +116,26 @@ export class CheckpointsService {
   }
 
   async addStatus(checkpointId: string, status: CheckpointStatus) {
+  const checkpoint = await this.prisma.checkpoint.findUnique({
+    where: { id: checkpointId },
+  });
+
+  if (!checkpoint) {
+    throw new HttpException('Checkpoint not found', HttpStatus.NOT_FOUND);
+  }
+
+  if (checkpoint.status === status) {
+    throw new HttpException(
+      'Checkpoint already has this status',
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
   await this.prisma.checkpointStatusHistory.create({
     data: {
       checkpointId,
       status,
     },
-    
   });
 
   return this.prisma.checkpoint.update({
