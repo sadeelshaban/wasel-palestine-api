@@ -1,17 +1,14 @@
 services:
   db:
-    # Official postgres image avoids template1 collation mismatch seen with some PostGIS
-    # images on Windows Docker. Add PostGIS later: CREATE EXTENSION postgis;
-    image: postgres:16-bookworm
+    image: postgres:16
     container_name: wasel_db
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: MyNewPassword
-      POSTGRES_DB: wasel_palestine_new
-    # Host port 15432 avoids clashes with a local PostgreSQL on 5432/5433 (Windows).
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: wasel_palestine
     ports:
-      - "15432:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
