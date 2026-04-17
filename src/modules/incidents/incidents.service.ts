@@ -1,6 +1,10 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { IncidentSeverity, IncidentStatus } from '@prisma/client';
+import {
+  IncidentSeverity,
+  IncidentStatus,
+  Prisma,
+} from '@prisma/client';
 
 @Injectable()
 export class IncidentsService {
@@ -15,25 +19,59 @@ export class IncidentsService {
     status: IncidentStatus;
     checkpointId?: string;
   }) {
+    if (data.latitude < -90 || data.latitude > 90) {
+      throw new HttpException('Invalid latitude', HttpStatus.BAD_REQUEST);
+    }
+
+    if (data.longitude < -180 || data.longitude > 180) {
+      throw new HttpException('Invalid longitude', HttpStatus.BAD_REQUEST);
+    }
+
     return this.prisma.incident.create({ data });
   }
 
-  async findAll(params: { page?: number; limit?: number }) {
-    const { page = 1, limit = 10 } = params;
-    const skip = (page - 1) * limit;
-    const total = await this.prisma.incident.count();
+  async findAll(params: {
+    page?: number;
+    limit?: number;
+    status?: IncidentStatus;
+    severity?: IncidentSeverity;
+    sort?: 'asc' | 'desc';
+  }) {
+    const {
+      page,
+      limit,
+      status,
+      severity,
+      sort = 'desc',
+    } = params;
+
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const where: Prisma.IncidentWhereInput = {
+      ...(status && { status }),
+      ...(severity && { severity }),
+    };
+
+    const total = await this.prisma.incident.count({ where });
+
     const data = await this.prisma.incident.findMany({
       skip,
-      take: limit,
-      orderBy: { createdAt: 'desc' },
+      take: limitNumber,
+      where,
+      orderBy: {
+        createdAt: sort,
+      },
     });
+
     return {
       data,
       meta: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
       },
     };
   }
@@ -53,7 +91,7 @@ export class IncidentsService {
     try {
       return await this.prisma.incident.update({
         where: { id },
-        data: { status: 'VERIFIED' },
+        data: { status: IncidentStatus.VERIFIED },
       });
     } catch (err) {
       throw new HttpException(
@@ -63,12 +101,52 @@ export class IncidentsService {
     }
   }
 
-
   async close(id: string) {
     try {
       return await this.prisma.incident.update({
         where: { id },
-        data: { status: 'CLOSED' },
+        data: { status: IncidentStatus.CLOSED },
+      });
+    } catch (err) {
+      throw new HttpException(
+        `Incident with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async update(id: string, data: any) {
+    if (
+      data.latitude !== undefined &&
+      (data.latitude < -90 || data.latitude > 90)
+    ) {
+      throw new HttpException('Invalid latitude', HttpStatus.BAD_REQUEST);
+    }
+
+    if (
+      data.longitude !== undefined &&
+      (data.longitude < -180 || data.longitude > 180)
+    ) {
+      throw new HttpException('Invalid longitude', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      return await this.prisma.incident.update({
+        where: { id },
+        data,
+      });
+    } catch (err) {
+      throw new HttpException(
+        `Incident with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async remove(id: string) {
+    try {
+      return await this.prisma.incident.delete({
+        where: { id },
       });
     } catch (err) {
       throw new HttpException(
