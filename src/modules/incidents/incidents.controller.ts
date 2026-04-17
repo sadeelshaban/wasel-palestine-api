@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, Patch,Put ,Delete} from '@nestjs/common';
 import { IncidentsService } from './incidents.service';
 import { IncidentSeverity, IncidentStatus } from '@prisma/client';
 
@@ -41,4 +41,17 @@ export class IncidentsController {
   close(@Param('id') id: string) {
     return this.incidentsService.close(id);
   }
+
+  @Put(':id')
+update(
+  @Param('id') id: string,
+  @Body() body: any,
+) {
+  return this.incidentsService.update(id, body);
+}
+
+@Delete(':id')
+remove(@Param('id') id: string) {
+  return this.incidentsService.remove(id);
+}
 }
