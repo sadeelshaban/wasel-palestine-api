@@ -3,6 +3,15 @@
 /node_modules
 /build
 
+# TypeScript incremental build info (should not be committed)
+*.tsbuildinfo
+
+# Local / generated API export (served dynamically at runtime via /openapi.json)
+/openapi.json
+
+# One-off SQL scratch files (use Prisma migrations instead)
+/fix_table.sql
+
 # Logs
 logs
 *.log

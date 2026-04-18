@@ -21,6 +21,11 @@ model User {
 
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  reports             Report[]
+  reportVotes         Vote[]
+  reportFlags         Flag[]
+  subscriptions       Subscription[]
+  alerts              Alert[]
 }
 
 model RefreshToken {
@@ -61,5 +66,160 @@ model AuditLog {
 
 enum Role {
   USER
+  MODERATOR
   ADMIN
+}
+
+enum CheckpointStatus {
+  OPEN
+  CLOSED
+  UNKNOWN
+}
+
+model Checkpoint {
+  id        String   @id @default(uuid())
+  name      String
+  latitude  Float
+  longitude Float
+  status    CheckpointStatus
+  createdAt DateTime @default(now())
+
+  statusHistory CheckpointStatusHistory[]
+  incidents     Incident[]
+}
+
+model CheckpointStatusHistory {
+  id           String           @id @default(uuid())
+  checkpointId String
+  status       CheckpointStatus
+  createdAt    DateTime         @default(now())
+
+  checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+}
+
+enum IncidentStatus {
+  OPEN
+  VERIFIED
+  CLOSED
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Incident {
+  id           String   @id @default(uuid())
+  type         String
+  severity     IncidentSeverity
+  status       IncidentStatus
+  description  String
+  latitude     Float
+  longitude    Float
+  checkpointId String?
+  createdAt    DateTime @default(now())
+
+  checkpoint Checkpoint? @relation(fields: [checkpointId], references: [id])
+  alerts     Alert[]
+}
+
+model Subscription {
+  id           String   @id @default(uuid())
+  userId       String
+  latitude     Float
+  longitude    Float
+  radiusMeters Int      @default(1000)
+  category     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([latitude, longitude])
+  @@index([userId, category])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Alert {
+  id         String   @id @default(uuid())
+  userId     String
+  incidentId String
+  message    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, incidentId])
+  @@index([userId, createdAt])
+  @@index([userId, isRead, createdAt])
+  @@index([incidentId])
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+model Report {
+  id               String       @id @default(uuid())
+  userId           String
+  category         String
+  description      String
+  latitude         Float
+  longitude        Float
+  status           ReportStatus @default(PENDING)
+  credibilityScore Float        @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes Vote[]
+  flags Flag[]
+
+  @@index([userId])
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  userId    String
+  reportId  String
+  voteType  VoteType
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reportId])
+  @@index([reportId])
+  @@index([userId])
+}
+
+model Flag {
+  id        String   @id @default(uuid())
+  userId    String
+  reportId  String
+  reason    String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([userId])
 }
