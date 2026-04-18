@@ -242,7 +242,7 @@ JWT_ACCESS_EXPIRES_SECS=900
 - **Documentation:** Keep README and API docs updated
 
 ### Getting Help
-1. Check `API_HANDOVER.md` for detailed API documentation
+1. Use Swagger UI (`/api-docs`) and the OpenAPI export (`/openapi.json`) for endpoint details
 2. Review existing code patterns in `src/modules/`
 3. Consult project requirements document
 4. Contact Infrastructure Lead for authentication/database issues
