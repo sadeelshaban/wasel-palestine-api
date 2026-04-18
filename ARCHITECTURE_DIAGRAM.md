@@ -1,356 +1,225 @@
-# 🏗️ Wasel Palestine - System Architecture
+# Wasel Palestine - System Architecture
 
-## 📋 **System Overview**
+This document describes the architecture of the Wasel Palestine backend as implemented in this repository. It is written to align with the course project specification for a backend-centric smart mobility platform: versioned REST APIs, relational persistence, JWT security, Docker-based deployment support, external integrations, and performance evaluation.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Wasel Palestine API Architecture                    │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+The **authoritative operation-level contract** is the OpenAPI document produced by the running service (`GET /openapi.json`). This file explains structure, responsibilities, and data concepts without replacing per-endpoint documentation in API Dog.
 
-## 🔧 **Technology Stack**
+## 1. System overview
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend     │    │   NestJS API   │    │  PostgreSQL    │
-│  (Mobile/Web)  │◄──►│   (Backend)     │◄──►│   Database      │
-│                │    │                │    │                │
-│ - React Native │    │ - Auth Module  │    │ - Users        │
-│ - Web App      │    │ - Users Module │    │ - Checkpoints  │
-│                │    │ - Reports      │    │ - Incidents    │
-└─────────────────┘    │ - Alerts       │    │ - Reports      │
-                       │ - Routes       │    │ - Alerts       │
-                       │ - External     │    │ - Subscriptions│
-                       └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────────────┐
-                       │  Docker        │
-                       │  Container     │
-                       └─────────────────┘
-```
+Wasel Palestine is an API-centric system. Clients integrate through HTTP JSON endpoints. The service persists operational data in PostgreSQL and enforces access control using JWT bearer authentication for protected routes.
 
-## 🏗️ **Module Architecture**
+High-level logical view:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        NestJS Application                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Authentication Module (13 endpoints)                                   │
-│  ├─ POST /auth/register                                              │
-│  ├─ POST /auth/login                                                 │
-│  ├─ POST /auth/refresh                                               │
-│  ├─ POST /auth/logout                                                │
-│  ├─ GET /auth/me                                                     │
-│  ├─ PATCH /auth/password                                              │
-│  ├─ POST /auth/forgot-password                                        │
-│  └─ POST /auth/reset-password                                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Users Management (7 endpoints)                                        │
-│  ├─ GET /users/profile                                               │
-│  ├─ PATCH /users/profile                                             │
-│  ├─ GET /users                                                       │
-│  ├─ GET /users/:id                                                   │
-│  ├─ PUT /users/:id                                                    │
-│  ├─ PATCH /users/:id/block                                            │
-│  └─ DELETE /users/:id                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Checkpoints Management (7 endpoints)                                    │
-│  ├─ POST /checkpoints                                                 │
-│  ├─ GET /checkpoints                                                  │
-│  ├─ GET /checkpoints/:id                                               │
-│  ├─ PUT /checkpoints/:id                                               │
-│  ├─ DELETE /checkpoints/:id                                            │
-│  ├─ POST /checkpoints/:id/status                                       │
-│  └─ GET /checkpoints/:id/history                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Incidents Management (7 endpoints)                                     │
-│  ├─ POST /incidents                                                  │
-│  ├─ GET /incidents                                                   │
-│  ├─ GET /incidents/:id                                                │
-│  ├─ PATCH /incidents/:id/verify                                      │
-│  └─ PATCH /incidents/:id/close                                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Reports System (9 endpoints)                                          │
-│  ├─ POST /reports                                                    │
-│  ├─ GET /reports                                                     │
-│  ├─ GET /reports/nearby                                              │
-│  ├─ GET /reports/:id                                                 │
-│  ├─ DELETE /reports/:id                                              │
-│  ├─ POST /reports/:id/vote                                           │
-│  ├─ POST /reports/:id/flag                                           │
-│  ├─ POST /reports/:id/approve                                         │
-│  └─ POST /reports/:id/reject                                          │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Alerts System (5 endpoints)                                          │
-│  ├─ POST /alerts/subscribe                                           │
-│  ├─ GET /alerts                                                      │
-│  ├─ PUT /alerts/:id                                                   │
-│  ├─ DELETE /alerts/:id                                                │
-│  └─ GET /alerts/feed                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Route Estimation (1 endpoint)                                         │
-│  └─ POST /routes/estimate                                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  External APIs (3 endpoints)                                           │
-│  ├─ GET /external/weather                                             │
-│  ├─ POST /external/route-preview                                       │
-│  └─ [Additional external integrations]                                   │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  System Utilities (2 endpoints)                                        │
-│  ├─ GET /health                                                      │
-│  └─ GET /admin/audit-logs                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Clients (mobile apps, dashboards, integrations)                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+                 │
+                 │ HTTPS / JSON
+                 ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Wasel Palestine API (NestJS)                                                  │
+│ Global prefix: /api/v1 (application endpoints)                               │
+│ Public probes/docs: /health, /api-docs, /openapi.json                        │
+│ Optional demo utility: /gui (HTML operator console, not a coursework UI)       │
+└──────────────────────────────────────────────────────────────────────────────┘
+                 │
+                 │ Prisma ORM
+                 ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PostgreSQL                                                                    │
+│ Relational schema + migrations (prisma/migrations)                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+External data providers are integrated through dedicated service modules. Those
+integrations are treated as unreliable dependencies: failures should degrade
+gracefully and must not destabilize core persistence workflows.
 ```
 
-## 🗄️ **Database Schema (ERD)**
+## 2. Technology stack
+
+- **Application**: NestJS + TypeScript
+- **Persistence**: PostgreSQL
+- **ORM and migrations**: Prisma (`prisma/schema.prisma`, `prisma/migrations`)
+- **Authentication**: JWT access tokens and refresh token storage/hashing (Auth module)
+- **API documentation**: Swagger UI + OpenAPI export (`/api-docs`, `/openapi.json`)
+- **Containerization**: Docker Compose for local PostgreSQL (`docker-compose.yml`)
+- **Performance testing**: k6 scripts (`performance/`)
+
+## 3. Modular application architecture (NestJS)
+
+The codebase is organized into NestJS modules that map to domain areas. Routes are exposed under `/api/v1` unless explicitly excluded (for example `GET /health`).
+
+Domain modules (conceptual grouping):
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        PostgreSQL Database                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Users                                                              │
-│  ├─ id (UUID) PK                                                    │
-│  ├─ email (unique)                                                    │
-│  ├─ password                                                          │
-│  ├─ firstName                                                         │
-│  ├─ lastName                                                          │
-│  ├─ phone                                                             │
-│  ├─ address                                                           │
-│  ├─ role (USER/ADMIN)                                                 │
-│  ├─ isBlocked                                                         │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Checkpoints                                                         │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ name                                                              │
-│  ├─ latitude                                                          │
-│  ├─ longitude                                                         │
-│  ├─ status (OPEN/CLOSED/UNKNOWN)                                      │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  CheckpointStatusHistory                                              │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ checkpointId (FK)                                                 │
-│  ├─ status                                                            │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Incidents                                                          │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ type                                                              │
-│  ├─ severity (LOW/MEDIUM/HIGH)                                         │
-│  ├─ status (OPEN/VERIFIED/CLOSED)                                      │
-│  ├─ description                                                       │
-│  ├─ latitude                                                          │
-│  ├─ longitude                                                         │
-│  ├─ checkpointId (FK)                                                 │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Reports                                                            │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ userId (FK)                                                      │
-│  ├─ type                                                              │
-│  ├─ description                                                       │
-│  ├─ latitude                                                          │
-│  ├─ longitude                                                         │
-│  ├─ status (PENDING/UNDER_REVIEW/APPROVED/REJECTED)                     │
-│  ├─ votes (integer)                                                   │
-│  ├─ flags (integer)                                                   │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Subscriptions                                                      │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ userId (FK)                                                      │
-│  ├─ latitude                                                          │
-│  ├─ longitude                                                         │
-│  ├─ radiusMeters                                                      │
-│  ├─ category                                                          │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Alerts                                                             │
-│  ├─ id (UUID) PK                                                     │
-│  ├─ userId (FK)                                                      │
-│  ├─ incidentId (FK)                                                  │
-│  ├─ message                                                           │
-│  ├─ isRead                                                            │
-│  └─ timestamps                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Supporting Tables                                                   │
-│  ├─ RefreshToken                                                      │
-│  ├─ PasswordResetToken                                                │
-│  └─ AuditLog                                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ NestJS application modules                                                    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Authentication (/api/v1/auth/...)                                             │
+│ - Registration, login, refresh rotation, logout                               │
+│ - Password change and reset flows (environment-dependent email behavior)      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Users (/api/v1/users/...)                                                     │
+│ - Profile operations for authenticated users                                  │
+│ - Administrative user management for privileged roles                         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Admin (/api/v1/admin/...)                                                     │
+│ - Audit log access for accountability                                         │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Checkpoints (/api/v1/checkpoints/...)                                         │
+│ - Registry and lifecycle operations                                           │
+│ - Status history for traceability                                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Incidents (/api/v1/incidents/...)                                             │
+│ - Incident reporting and moderation-style state transitions where applicable  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Reports (/api/v1/reports/...)                                                 │
+│ - Crowdsourced reporting, moderation, voting/flagging mechanics               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Alerts (/api/v1/alerts/...)                                                   │
+│ - Subscriptions and user alert feeds                                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Route estimation (/api/v1/routes/...)                                         │
+│ - Heuristic/integrated route estimation entry points                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ External (/api/v1/external/...)                                               │
+│ - Weather and routing preview helpers backed by external providers            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Health (GET /health)                                                          │
+│ - Process and dependency readiness reporting                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔐 **Security Architecture**
+Implementation note: the exact method list and schemas evolve with the codebase; use Swagger/OpenAPI as the precise contract.
+
+## 4. Security architecture (JWT)
+
+Authentication follows a standard JWT pattern:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Authentication Flow                             │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  1. User Registration                                                │
-│     ├─ POST /auth/register                                            │
-│     ├─ Hash password (bcrypt)                                          │
-│     └─ Create user record                                             │
-│                                                                     │
-│  2. User Login                                                      │
-│     ├─ POST /auth/login                                               │
-│     ├─ Validate credentials                                            │
-│     ├─ Generate JWT Access Token (15 min)                               │
-│     └─ Generate Refresh Token (7 days)                                  │
-│                                                                     │
-│  3. API Requests                                                    │
-│     ├─ Bearer Token in Authorization header                               │
-│     ├─ Validate JWT signature                                          │
-│     └─ Check user permissions (Role-based)                              │
-│                                                                     │
-│  4. Token Refresh                                                   │
-│     ├─ POST /auth/refresh                                             │
-│     ├─ Validate refresh token                                          │
-│     └─ Generate new access token                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Authentication flow (conceptual)                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 1) Registration                                                                │
+│    - Client submits credentials to POST /api/v1/auth/register                 │
+│    - Password is stored using a slow password hash (bcrypt)                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 2) Login                                                                       │
+│    - Client submits credentials to POST /api/v1/auth/login                    │
+│    - Server returns access token + refresh token (rotation policy applies)    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 3) Authenticated requests                                                      │
+│    - Client sends Authorization: Bearer <access_token>                      │
+│    - Server validates JWT signature and expiry                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 4) Refresh                                                                     │
+│    - Client submits refresh token to POST /api/v1/auth/refresh                │
+│    - Server validates refresh token and issues a new access token             │
+│    - Refresh token rotation may invalidate prior refresh tokens               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 5) Logout                                                                      │
+│    - Client revokes a refresh token via POST /api/v1/auth/logout              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🌐 **External Integrations**
+Authorization is role-aware (`USER`, `MODERATOR`, `ADMIN` in the Prisma schema). Administrative routes must enforce elevated privileges at the controller/guard level.
+
+## 5. Data architecture (ERD-oriented summary)
+
+The Prisma schema is the source of truth for tables and relationships. The following is a concise entity summary aligned to `prisma/schema.prisma`:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    External APIs                               │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  1. OpenStreetMap/OSRM                                               │
-│     ├─ Route calculation                                               │
-│     ├─ Distance estimation                                            │
-│     └─ Traffic data                                                 │
-│                                                                     │
-│  2. Weather API                                                      │
-│     ├─ Current weather conditions                                       │
-│     ├─ Forecasts                                                     │
-│     └─ Weather alerts                                               │
-│                                                                     │
-│  3. Geocoding Services                                               │
-│     ├─ Address to coordinates                                         │
-│     ├─ Coordinates to address                                         │
-│     └─ Location validation                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
+User
+- Identity and profile fields
+- Role and blocked flag
+- Relations: refresh tokens, password reset tokens, reports, votes, flags,
+  subscriptions, alerts
+
+Checkpoint
+- Name and coordinates
+- Status with history table for auditing transitions
+- Relation: incidents may reference a checkpoint when relevant
+
+CheckpointStatusHistory
+- Append-only history of checkpoint status changes
+
+Incident
+- Type, severity, status, description, coordinates
+- Optional checkpoint linkage
+- Relation: alerts may be generated in response to incident lifecycle events
+
+Report
+- Crowdsourced report with category, description, coordinates
+- Moderation status and a credibility score field used by community mechanics
+- Relations: votes and flags
+
+Vote / Flag
+- Per-user report voting and abuse reporting constructs
+
+Subscription
+- Geographic subscription parameters for alert targeting
+
+Alert
+- User-visible alert records tied to incidents (uniqueness enforced per user/incident)
+
+AuditLog
+- Administrative audit trail entries with JSON metadata for extensibility
+
+RefreshToken / PasswordResetToken
+- Hashed token storage supporting rotation and password reset workflows
 ```
 
-## 🚀 **Performance Architecture**
+Indexes are defined in Prisma where needed for listing patterns (for example report status, geography-related lookups, and feed ordering).
+
+## 6. External integrations
+
+External providers are integrated to satisfy the coursework requirement for at least two external API categories (routing/geolocation context and contextual data such as weather). In this codebase, external access is isolated behind `ExternalModule` services so that:
+
+- HTTP failures can be handled without corrupting local transactional workflows
+- timeouts and provider-specific constraints can be centralized
+- future caching or circuit breaking can be added without rewriting controllers
+
+## 7. Deployment architecture (local-first)
+
+Typical local engineering topology:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Performance Testing                           │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  1. Load Testing (k6)                                              │
-│     ├─ Read-heavy workloads                                            │
-│     ├─ Write-heavy workloads                                           │
-│     ├─ Mixed workloads                                                │
-│     ├─ Spike testing                                                  │
-│     └─ Sustained load                                               │
-│                                                                     │
-│  2. Caching Strategy                                                 │
-│     ├─ API response caching                                            │
-│     ├─ Database query caching                                          │
-│     └─ External API response caching                                   │
-│                                                                     │
-│  3. Database Optimization                                             │
-│     ├─ Indexed queries                                                │
-│     ├─ Connection pooling                                             │
-│     └─ Query optimization                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
+Developer laptop
+  - Node.js runs the NestJS process
+  - Docker Compose runs PostgreSQL
+
+Production-like deployment (pattern)
+  - Container image for the API (deployment-specific)
+  - Managed or containerized PostgreSQL
+  - Environment variables for secrets and provider keys
 ```
 
-## 📱 **Deployment Architecture**
+## 8. Performance and reliability testing
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Deployment                              │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  1. Docker Containerization                                           │
-│     ├─ Application container                                           │
-│     ├─ PostgreSQL container                                           │
-│     └─ Docker Compose orchestration                                  │
-│                                                                     │
-│  2. Environment Configuration                                        │
-│     ├─ Development environment                                         │
-│     ├─ Staging environment                                            │
-│     └─ Production environment                                         │
-│                                                                     │
-│  3. Monitoring & Logging                                            │
-│     ├─ Application logs                                               │
-│     ├─ Database logs                                                 │
-│     ├─ Performance metrics                                            │
-│     └─ Error tracking                                               │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+The coursework requires k6-based evaluation. This repository includes k6 scripts under `performance/` to exercise read-heavy, write-heavy, mixed, spike, and soak-style scenarios as appropriate to your test plan.
 
-## 🎯 **Team Responsibilities**
+Reporting should include:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Team Structure                              │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  1. Infrastructure & Users Lead (13 endpoints)                        │
-│     ├─ Authentication system                                          │
-│     ├─ User management                                               │
-│     ├─ Security implementation                                       │
-│     └─ API documentation                                            │
-│                                                                     │
-│  2. Core Domain Engineer (14 endpoints)                              │
-│     ├─ Checkpoints management                                        │
-│     ├─ Incidents management                                         │
-│     ├─ Database schema design                                        │
-│     └─ Filtering/pagination implementation                            │
-│                                                                     │
-│  3. Community & Alerts Developer (14 endpoints)                       │
-│     ├─ Reports system                                               │
-│     ├─ Voting/flagging mechanisms                                   │
-│     ├─ Geographic queries                                            │
-│     ├─ Duplicate detection                                         │
-│     └─ Alert subscriptions                                         │
-│                                                                     │
-│  4. Integration & Performance Engineer (6 endpoints)                   │
-│     ├─ External API integrations                                     │
-│     ├─ Route estimation                                             │
-│     ├─ Performance testing                                           │
-│     └─ System optimization                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+- Average response time and tail latency (p95)
+- Throughput and error rate
+- Observed bottlenecks and mitigations
 
-## 📊 **System Metrics**
+## 9. Documentation and API Dog workflow
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    Performance Metrics                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Total Endpoints: 47                                                  │
-│  - Authentication: 13                                                  │
-│  - Users Management: 7                                                  │
-│  - Checkpoints: 7                                                       │
-│  - Incidents: 7                                                         │
-│  - Reports: 9                                                           │
-│  - Alerts: 5                                                             │
-│  - Route Estimation: 1                                                    │
-│  - External APIs: 3                                                       │
-│  - System Utilities: 2                                                   │
-│                                                                        │
-│  Database Tables: 9                                                      │
-│  - Users, Checkpoints, Incidents, Reports, Alerts, Subscriptions, etc.     │
-│                                                                        │
-│  Performance Tests: 4 scenarios                                            │
-│  - Read-heavy, Write-heavy, Mixed, Spike testing                          │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+API Dog deliverables should be generated from the running service OpenAPI export:
 
----
+- Import `GET /openapi.json` into API Dog
+- Maintain environment configurations (base URL, auth tokens)
+- Keep request/response examples aligned with actual validation rules
 
-## 🎯 **Summary**
+## 10. Collaboration model (engineering ownership)
 
-**Wasel Palestine** is a comprehensive smart mobility platform with:
-- ✅ **47 RESTful endpoints** covering all required features
-- ✅ **Modern tech stack** (NestJS + PostgreSQL + Docker)
-- ✅ **Complete authentication** system with JWT
-- ✅ **Geographic capabilities** with PostGIS
-- ✅ **External integrations** for routing and weather
-- ✅ **Performance testing** with k6
-- ✅ **Comprehensive documentation** and architecture
+The project is intentionally split into cohesive backend workstreams that match the coursework feature areas:
 
-**The system is production-ready and meets all university requirements!** 🚀
+- Platform foundations: authentication, user administration, auditability, API documentation plumbing
+- Core mobility domain: checkpoints, incidents, querying and pagination
+- Community reporting: reports, credibility signals, moderation workflows
+- Integrations and route intelligence: external providers, route estimation, performance testing
+
+This section is organizational; exact contributor mapping is maintained via version control history and pull requests.
