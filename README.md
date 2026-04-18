@@ -23,9 +23,11 @@ This project is designed to satisfy the backend requirements described in the co
 - **Relational database** using PostgreSQL, accessed through **Prisma** (ORM) and backed by migrations under `prisma/migrations`.
 - **Versioned APIs** under `/api/v1/...` for application endpoints.
 - **JWT authentication** with access and refresh token flows (see Authentication module).
+- **Incident write security:** creating, updating, verifying, closing, or deleting incidents requires **JWT** and role **MODERATOR** or **ADMIN**; listing and reading a single incident remain **public**.
+- **Checkpoint write security:** creating, updating, deleting checkpoints and posting status transitions require **JWT** and **MODERATOR** or **ADMIN**; listing, detail, and status history remain **public**.
 - **Docker** support for local deployment via `docker-compose.yml`.
-- **External integrations** implemented as dedicated modules with defensive handling (timeouts and pragmatic error behavior; see External module).
-- **Performance evaluation** using **k6** scripts under `performance/` (run separately; k6 is not a Node dependency).
+- **External integrations** via `ExternalModule`: real HTTP calls to **OSRM** (routing) and **Open-Meteo** or **OpenWeatherMap** (weather), with in-memory caching, outbound rate limiting, timeouts, and fallbacks when providers fail or limits are hit (see `.env.example`).
+- **Performance evaluation** using **k6** scripts under `performance/` (`read-heavy`, `write-heavy`, `mixed`, `spike`, `soak`; run separately; k6 is not a Node dependency). Record outcomes in `performance/PERFORMANCE_REPORT.md`.
 
 Primary API documentation for coursework deliverables should be maintained in **API Dog** using the exported OpenAPI document from a running service.
 
@@ -34,6 +36,7 @@ Primary API documentation for coursework deliverables should be maintained in **
 For a structured architecture narrative, diagrams, and ERD-oriented notes, see:
 
 - `ARCHITECTURE_DIAGRAM.md`
+- **`docs/ERD.png`** — ERD figure for coursework (see also `docs/ERD.mmd` for Mermaid source)
 
 ## Technology stack
 
@@ -43,13 +46,14 @@ For a structured architecture narrative, diagrams, and ERD-oriented notes, see:
 - **ORM**: Prisma
 - **Auth**: JWT access tokens and refresh token rotation (implementation details in Auth module)
 - **HTTP documentation**: Swagger UI + OpenAPI JSON served by the application
-- **Containerization**: Docker Compose for PostgreSQL (and optional app containerization depending on your deployment approach)
+- **Containerization**: `docker-compose.yml` runs **PostgreSQL** and an **`api`** service built from `Dockerfile` (migrations on startup, then NestJS)
 
 ## Repository layout (practical)
 
 - `src/` NestJS application code (modules, controllers, services)
 - `prisma/` Prisma schema, migrations, seed script
-- `performance/` k6 load test scripts
+- `performance/` k6 load test scripts and performance report template
+- `delivery/api-dog/` place exported API Dog collection and environments for coursework hand-in
 - `swagger/` Swagger UI theme overrides
 - `test/` automated tests (Jest)
 
@@ -90,6 +94,18 @@ Notes:
 
 - Use `cp` instead of `copy` on Unix-like shells.
 - The exact migration name is not important for local development; `prisma migrate dev` will apply pending migrations.
+
+## Run database and API with Docker Compose
+
+This runs PostgreSQL and the API container (migrations run automatically before the server starts). Set a strong `JWT_SECRET` in your environment when using this in shared settings.
+
+```bash
+docker compose up --build
+```
+
+The API listens on **`http://localhost:3000`** by default. If you see `bind: ... 3000 ... already permitted`, something else is using port 3000 (often a local `npm run dev`). Either stop that process or set **`DOCKER_API_PORT=3001`** in `.env` and open **`http://localhost:3001`** instead (see `.env.example`).
+
+Optional: add `OPENWEATHER_API_KEY` to your `.env` so weather data uses OpenWeatherMap instead of Open-Meteo.
 
 ## Default administrator account (seed)
 
@@ -145,10 +161,34 @@ End-to-end tests (if you run them in your environment):
 npm run test:e2e
 ```
 
+Requires **`DATABASE_URL`** (same DB as local dev). For **RBAC admin assertions**, run **`npm run db:seed`** once so `admin@wasel.local` exists (or set `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` to match your `.env`). If the DB is missing, the RBAC suite is **skipped** automatically.
+
 Performance tests (k6):
 
-- See scripts in `performance/`
+- See scripts in `performance/` (`read-heavy.js`, `write-heavy.js`, `mixed.js`, `spike.js`, `soak.js`)
 - Run k6 using your platform installation; the scripts are not executed by `npm test` automatically.
+- Optional: `BASE_URL=http://localhost:3000 k6 run performance/soak.js` (defaults to `http://localhost:3000` if unset)
+- **Write-heavy script** logs in as the seeded admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars override defaults) so `POST /api/v1/incidents` succeeds after RBAC.
+- **Without installing k6:** use Docker, for example:  
+  `docker run --rm -v "%CD%:/work" -w /work -e BASE_URL=http://host.docker.internal:3000 grafana/k6 run --summary-export=/work/performance/k6-summary-read-heavy.json --vus 5 --duration 10s /work/performance/read-heavy.js`  
+  (on Unix shells use `"$PWD"` instead of `%CD%`; add `--add-host=host.docker.internal:host-gateway` on Linux if needed.)
+- Example metrics and JSON exports are committed under `performance/` (`PERFORMANCE_REPORT.md`, `k6-summary-*.json`). Re-run after changes to refresh numbers.
+
+## OpenAPI export (API Dog hand-in)
+
+With PostgreSQL available (`DATABASE_URL` set, migrations applied):
+
+```bash
+npm run export:openapi
+```
+
+If the API is already running and you only need the document from `GET /openapi.json`:
+
+```bash
+npm run export:openapi:http
+```
+
+Outputs go to `delivery/api-dog/openapi.json` (see `delivery/api-dog/INSTRUCTIONS.txt`).
 
 ## Version control expectations
 
@@ -163,6 +203,8 @@ The coursework requires traceable engineering practice:
 - Never commit real `.env` secrets.
 - Treat JWT secrets as sensitive configuration.
 - For shared demo environments, disable or rotate default seeded credentials.
+- **`npm audit`:** run `npm audit` / `npm audit fix` before releases. This repo uses an **`overrides`** entry for `@hono/node-server` so `npm audit` reports **0 vulnerabilities** while staying on **Prisma 7**.
+- The optional **`/gui`** page sends **Content-Security-Policy** and related headers to reduce common browser risks (inline script is still allowed because the console is a single embedded page).
 
 ## License
 

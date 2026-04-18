@@ -7,10 +7,11 @@ export const options = {
 };
 
 export default function () {
-  http.get('http://localhost:3000/api/v1/incidents');
+  const base = __ENV.BASE_URL || 'http://localhost:3000';
+  http.get(`${base}/api/v1/incidents?page=1&limit=20`);
 
   http.post(
-    'http://localhost:3000/api/v1/routes/estimate',
+    `${base}/api/v1/routes/estimate`,
     JSON.stringify({
       origin: { lat: 32.22, lng: 35.25 },
       destination: { lat: 31.9, lng: 35.2 },

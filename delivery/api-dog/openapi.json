@@ -1,0 +1,1102 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/users/profile": {
+      "get": {
+        "description": "**Access:** `authenticated`",
+        "operationId": "UsersController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my profile",
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "description": "**Access:** `authenticated` — Optional: firstName, lastName, phone, address.",
+        "operationId": "UsersController_patchProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update my profile",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "description": "**Access:** `admin`",
+        "operationId": "UsersController_listUsers",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search email, first name, or last name (case-insensitive)",
+            "schema": {}
+          },
+          {
+            "name": "isBlocked",
+            "required": false,
+            "in": "query",
+            "description": "`true` or `false`",
+            "schema": {
+              "example": "false"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "USER",
+                "MODERATOR",
+                "ADMIN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "description": "Max 100",
+            "schema": {
+              "example": 20
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all users (paginated)",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "description": "**Access:** `admin`",
+        "operationId": "UsersController_getUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get user by ID",
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "description": "**Access:** `admin` — Partial update: email, names, phone, address, role.",
+        "operationId": "UsersController_adminUpdateUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update user (admin)",
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "description": "**Access:** `admin`",
+        "operationId": "UsersController_deleteUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete user permanently",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/{id}/block": {
+      "patch": {
+        "description": "**Access:** `admin` — `isBlocked: true` freezes login.",
+        "operationId": "UsersController_blockUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Block or unblock user",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "description": "**Access:** `public`",
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register new user",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "**Access:** `public` — Returns `accessToken`, `refreshToken`, and `expiresInSeconds`.",
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Login and get tokens",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "description": "**Access:** `authenticated` — Send `refreshToken` from login. Rotates refresh token. Alias: `POST /auth/refresh-token`.",
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Refresh access token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh-token": {
+      "post": {
+        "description": "**Access:** `authenticated` — Same as `POST /auth/refresh`.",
+        "operationId": "AuthController_refreshToken",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Refresh access token (alias)",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "**Access:** `authenticated` — Invalidates the given refresh token.",
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Revoke refresh token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "description": "**Access:** `authenticated` — Same data as `GET /users/profile`.",
+        "operationId": "AuthController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current user",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/password": {
+      "patch": {
+        "description": "**Access:** `authenticated` — Requires current password; revokes all refresh tokens.",
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "description": "**Access:** `public` — In non-production, response may include `devResetToken` for testing. Wire email in production.",
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Request password reset",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "description": "**Access:** `public` — Use `token` from forgot-password flow.",
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Complete password reset",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "description": "**Access:** `admin` — Who did what and when.",
+        "operationId": "AuditController_list",
+        "parameters": [
+          {
+            "name": "take",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 50
+            }
+          },
+          {
+            "name": "skip",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Audit log entries",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "**Access:** `public` — Process uptime and database connectivity.",
+        "operationId": "HealthController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/checkpoints": {
+      "post": {
+        "operationId": "CheckpointsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      },
+      "get": {
+        "description": "**Access:** `public` — optional `status` filters the registry.",
+        "operationId": "CheckpointsController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "OPEN",
+                "CLOSED",
+                "UNKNOWN"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List checkpoints (paginated, optional status filter)",
+        "tags": [
+          "Checkpoints"
+        ]
+      }
+    },
+    "/api/v1/checkpoints/{id}": {
+      "get": {
+        "operationId": "CheckpointsController_findOne",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      },
+      "delete": {
+        "operationId": "CheckpointsController_remove",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      },
+      "put": {
+        "operationId": "CheckpointsController_update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      }
+    },
+    "/api/v1/checkpoints/{id}/status": {
+      "post": {
+        "operationId": "CheckpointsController_addStatus",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      }
+    },
+    "/api/v1/checkpoints/{id}/history": {
+      "get": {
+        "operationId": "CheckpointsController_getHistory",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Checkpoints"
+        ]
+      }
+    },
+    "/api/v1/incidents": {
+      "post": {
+        "description": "**Access:** `moderator` or `admin` (JWT). Course-aligned: only authorized staff create official incidents.",
+        "operationId": "IncidentsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create incident",
+        "tags": [
+          "Incidents"
+        ]
+      },
+      "get": {
+        "description": "**Access:** `public` — filter by `status`, `severity`, and case-insensitive `type`; sort `createdAt` with `sort=asc|desc`.",
+        "operationId": "IncidentsController_findAll",
+        "parameters": [
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Incident type string (case-insensitive match)",
+            "schema": {
+              "example": "closure",
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "OPEN",
+                "VERIFIED",
+                "CLOSED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List incidents (paginated, filterable, sortable)",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{id}": {
+      "get": {
+        "description": "**Access:** `public`",
+        "operationId": "IncidentsController_findOne",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get incident by id",
+        "tags": [
+          "Incidents"
+        ]
+      },
+      "put": {
+        "description": "**Access:** `moderator` or `admin`",
+        "operationId": "IncidentsController_update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update incident",
+        "tags": [
+          "Incidents"
+        ]
+      },
+      "delete": {
+        "description": "**Access:** `moderator` or `admin`",
+        "operationId": "IncidentsController_remove",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete incident",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{id}/verify": {
+      "patch": {
+        "description": "**Access:** `moderator` or `admin` — sets status to VERIFIED and triggers subscriber alerts.",
+        "operationId": "IncidentsController_verify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify incident",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{id}/close": {
+      "patch": {
+        "description": "**Access:** `moderator` or `admin`",
+        "operationId": "IncidentsController_close",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close incident",
+        "tags": [
+          "Incidents"
+        ]
+      }
+    },
+    "/api/v1/alerts/subscribe": {
+      "post": {
+        "description": "**Access:** `authenticated` — by location radius and optional category.",
+        "operationId": "AlertsController_subscribe",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create alert subscription",
+        "tags": [
+          "Alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "description": "**Access:** `authenticated`",
+        "operationId": "AlertsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List my subscriptions",
+        "tags": [
+          "Alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts/{id}": {
+      "put": {
+        "description": "**Access:** `authenticated` — only owner can update.",
+        "operationId": "AlertsController_update",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update subscription",
+        "tags": [
+          "Alerts"
+        ]
+      },
+      "delete": {
+        "description": "**Access:** `authenticated` — only owner can delete.",
+        "operationId": "AlertsController_remove",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete subscription",
+        "tags": [
+          "Alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts/feed": {
+      "get": {
+        "description": "**Access:** `authenticated` — newest first.",
+        "operationId": "AlertsController_feed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get my alert feed",
+        "tags": [
+          "Alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts/feed/{id}/read": {
+      "put": {
+        "description": "**Access:** `authenticated` — optional quality improvement.",
+        "operationId": "AlertsController_markRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark alert as read/unread",
+        "tags": [
+          "Alerts"
+        ]
+      }
+    },
+    "/api/v1/reports": {
+      "post": {
+        "description": "**Access:** `authenticated`",
+        "operationId": "ReportsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a report",
+        "tags": [
+          "Reports"
+        ]
+      },
+      "get": {
+        "description": "**Access:** `public` — supports pagination and filtering.",
+        "operationId": "ReportsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List reports",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/nearby": {
+      "get": {
+        "description": "**Access:** `public` — uses PostGIS ST_DWithin query.",
+        "operationId": "ReportsController_nearby",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Find nearby reports",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{id}": {
+      "get": {
+        "description": "**Access:** `public`",
+        "operationId": "ReportsController_findOne",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get report by ID",
+        "tags": [
+          "Reports"
+        ]
+      },
+      "delete": {
+        "description": "**Access:** `admin`",
+        "operationId": "ReportsController_remove",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{id}/vote": {
+      "post": {
+        "description": "**Access:** `authenticated` — one vote per user per report.",
+        "operationId": "ReportsController_vote",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Vote on report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{id}/flag": {
+      "post": {
+        "description": "**Access:** `authenticated` — one flag per user per report.",
+        "operationId": "ReportsController_flag",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Flag report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{id}/approve": {
+      "post": {
+        "description": "**Access:** `moderator` or `admin`",
+        "operationId": "ReportsController_approve",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/reports/{id}/reject": {
+      "post": {
+        "description": "**Access:** `moderator` or `admin`",
+        "operationId": "ReportsController_reject",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject report",
+        "tags": [
+          "Reports"
+        ]
+      }
+    },
+    "/api/v1/external/weather": {
+      "get": {
+        "description": "**Access:** `public`",
+        "operationId": "ExternalController_getWeather",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get weather by coordinates",
+        "tags": [
+          "External"
+        ]
+      }
+    },
+    "/api/v1/external/route-preview": {
+      "post": {
+        "description": "**Access:** `public`",
+        "operationId": "ExternalController_getRoutePreview",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Get basic route preview",
+        "tags": [
+          "External"
+        ]
+      }
+    },
+    "/api/v1/routes/estimate": {
+      "post": {
+        "description": "**Access:** `public`",
+        "operationId": "RouteEstimationController_estimate",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Estimate route between two locations",
+        "tags": [
+          "Route Estimation"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Wasel Palestine - API Reference",
+    "description": "REST API for Wasel Palestine.\n\nImport this file into API Dog:\n- File: `delivery/api-dog/openapi.json` (this export)\n- Or live: `GET /openapi.json` from a running server",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Registration, login, tokens, password flows"
+    },
+    {
+      "name": "Users",
+      "description": "Profiles and admin user management"
+    },
+    {
+      "name": "Admin",
+      "description": "Audit and administration"
+    },
+    {
+      "name": "Health",
+      "description": "Service status"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {}
+  }
+}

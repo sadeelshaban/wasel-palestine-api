@@ -125,7 +125,17 @@ Authentication follows a standard JWT pattern:
 
 Authorization is role-aware (`USER`, `MODERATOR`, `ADMIN` in the Prisma schema). Administrative routes must enforce elevated privileges at the controller/guard level.
 
+**Incidents (course security alignment):** `GET /api/v1/incidents` and `GET /api/v1/incidents/:id` are **public** (read intelligence). `POST`, `PUT`, `PATCH` (verify/close), and `DELETE` on incidents require **JWT** and role **`MODERATOR` or `ADMIN`** (`AuthGuard('jwt')` + `RolesGuard` + `@Roles`).
+
+**Checkpoints:** `GET` list, `GET :id`, and `GET :id/history` are **public**. `POST`, `PUT`, `DELETE`, and `POST :id/status` require **`MODERATOR` or `ADMIN`** with JWT.
+
 ## 5. Data architecture (ERD-oriented summary)
+
+Course ERD deliverable (visual + machine-readable):
+
+- **`docs/ERD.png`** — diagram image for hand-ins and slides  
+- **`docs/ERD.mmd`** — Mermaid source; regenerate with:  
+  `npx -y @mermaid-js/mermaid-cli -i docs/ERD.mmd -o docs/ERD.png -b white`
 
 The Prisma schema is the source of truth for tables and relationships. The following is a concise entity summary aligned to `prisma/schema.prisma`:
 
@@ -174,11 +184,15 @@ Indexes are defined in Prisma where needed for listing patterns (for example rep
 
 ## 6. External integrations
 
-External providers are integrated to satisfy the coursework requirement for at least two external API categories (routing/geolocation context and contextual data such as weather). In this codebase, external access is isolated behind `ExternalModule` services so that:
+The coursework requires at least two external-style integrations (routing/geolocation and contextual data such as weather), with defensive handling for authentication, rate limits, timeouts, and caching.
 
-- HTTP failures can be handled without corrupting local transactional workflows
-- timeouts and provider-specific constraints can be centralized
-- future caching or circuit breaking can be added without rewriting controllers
+Implementation details in `ExternalService`:
+
+- **Routing**: OSRM-compatible `GET /route/v1/driving/...` against `OSRM_BASE_URL` (default public OSRM demo). Responses drive distance and duration when available; failures fall back to a local haversine estimate so core flows stay available.
+- **Weather**: if `OPENWEATHER_API_KEY` is set, **OpenWeatherMap** is used (authenticated). Otherwise **Open-Meteo** is used (public, keyless). Failures fall back to a simple static profile.
+- **Timeouts**: outbound requests use `EXTERNAL_HTTP_TIMEOUT_MS` (default 10 seconds).
+- **Caching**: in-memory TTL caches keyed by rounded coordinates (`WEATHER_CACHE_TTL_SEC`, `ROUTE_CACHE_TTL_SEC`).
+- **Rate limiting**: an in-process sliding window caps outbound external calls per minute (`EXTERNAL_OUTBOUND_RPM`) to avoid hammering public endpoints; when the cap is hit, the service uses the same fallbacks as on HTTP errors.
 
 ## 7. Deployment architecture (local-first)
 
@@ -187,17 +201,21 @@ Typical local engineering topology:
 ```
 Developer laptop
   - Node.js runs the NestJS process
-  - Docker Compose runs PostgreSQL
+  - Docker Compose runs PostgreSQL (and optionally the API container)
+
+Docker Compose (this repository)
+  - `db`: PostgreSQL 16
+  - `api`: image built from `Dockerfile`, runs `prisma migrate deploy` then the Nest app
 
 Production-like deployment (pattern)
-  - Container image for the API (deployment-specific)
+  - Container image for the API (`Dockerfile`)
   - Managed or containerized PostgreSQL
   - Environment variables for secrets and provider keys
 ```
 
 ## 8. Performance and reliability testing
 
-The coursework requires k6-based evaluation. This repository includes k6 scripts under `performance/` to exercise read-heavy, write-heavy, mixed, spike, and soak-style scenarios as appropriate to your test plan.
+The coursework requires k6-based evaluation. This repository includes k6 scripts under `performance/`: `read-heavy.js`, `write-heavy.js`, `mixed.js`, `spike.js`, and `soak.js`. Use optional `BASE_URL` and `SOAK_DURATION` environment variables when running k6. Capture results in `performance/PERFORMANCE_REPORT.md`.
 
 Reporting should include:
 
@@ -212,6 +230,7 @@ API Dog deliverables should be generated from the running service OpenAPI export
 - Import `GET /openapi.json` into API Dog
 - Maintain environment configurations (base URL, auth tokens)
 - Keep request/response examples aligned with actual validation rules
+- Export the collection and environment JSON into `delivery/api-dog/` for hand-in (see `delivery/api-dog/INSTRUCTIONS.txt`)
 
 ## 10. Collaboration model (engineering ownership)
 

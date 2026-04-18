@@ -11,7 +11,7 @@ export class RouteEstimationService {
   ) {}
 
   async estimate(dto: EstimateRouteDto) {
-    const baseRoute = this.externalService.getRoutePreview(
+    const baseRoute = await this.externalService.getRoutePreview(
       dto.origin,
       dto.destination,
     );
@@ -55,7 +55,7 @@ export class RouteEstimationService {
       factors.push(`${dto.avoidAreas.length} avoid areas applied`);
     }
 
-    const weather = this.externalService.getWeather(
+    const weather = await this.externalService.getWeather(
       dto.destination.lat,
       dto.destination.lng,
     );

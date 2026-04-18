@@ -1,0 +1,26 @@
+Course deliverable (API Dog + OpenAPI)
+
+What is already in this folder
+------------------------------
+- openapi.json — OpenAPI 3 document exported from the Nest app (run: npm run export:openapi with DATABASE_URL set, or import live GET /openapi.json).
+- environment.local.json — starter variables (baseUrl, apiPrefix, tokens) for tools that accept Postman-style environments.
+- wasel-palestine.postman_collection.json — small Postman v2.1 collection (smoke tests). API Dog often accepts Postman imports; otherwise use openapi.json as the primary import.
+
+API Dog workflow
+----------------
+1. Run the API (local Node or docker compose).
+2. In API Dog: Import → OpenAPI → choose openapi.json from this folder (or paste URL http://localhost:3000/openapi.json).
+3. Import environment.local.json (or create an environment with the same keys).
+4. Document authentication: Bearer access token from POST /api/v1/auth/login; set it on secured requests.
+5. Add your own API Dog “test” steps and examples per endpoint (request/response/error shapes).
+6. Export the API Dog **collection** and **environment** from API Dog and save the exported files here alongside these, using names your instructor expects (e.g. wasel-api-dog.json).
+
+Refresh OpenAPI after code changes
+-----------------------------------
+From repo root (PostgreSQL reachable, DATABASE_URL in .env or shell):
+
+  npm run export:openapi
+
+If the API is already running on localhost:3000 and you prefer not to boot Prisma:
+
+  npm run export:openapi:http

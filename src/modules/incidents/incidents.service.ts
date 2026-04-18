@@ -1,14 +1,25 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   IncidentSeverity,
   IncidentStatus,
   Prisma,
 } from '@prisma/client';
+import { AlertsService } from '../../alerts/alerts.service';
 
 @Injectable()
 export class IncidentsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(IncidentsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private readonly alertsService: AlertsService,
+  ) {}
 
   async create(data: {
     type: string;
@@ -35,17 +46,22 @@ export class IncidentsService {
     limit?: number;
     status?: IncidentStatus;
     severity?: IncidentSeverity;
+    type?: string;
     sort?: 'asc' | 'desc';
   }) {
-    const { page, limit, status, severity, sort = 'desc' } = params;
+    const { page, limit, status, severity, type, sort = 'desc' } = params;
 
     const pageNumber = Number(page) || 1;
     const limitNumber = Number(limit) || 10;
     const skip = (pageNumber - 1) * limitNumber;
 
+    const trimmedType = type?.trim();
     const where: Prisma.IncidentWhereInput = {
       ...(status && { status }),
       ...(severity && { severity }),
+      ...(trimmedType && {
+        type: { equals: trimmedType, mode: 'insensitive' },
+      }),
     };
 
     const total = await this.prisma.incident.count({ where });
@@ -82,61 +98,72 @@ export class IncidentsService {
   }
 
   async verify(id: string) {
-  const incident = await this.prisma.incident.findUnique({
-    where: { id },
-  });
+    const incident = await this.prisma.incident.findUnique({
+      where: { id },
+    });
 
-  if (!incident) {
-    throw new HttpException(
-      `Incident with id ${id} not found`,
-      HttpStatus.NOT_FOUND,
-    );
+    if (!incident) {
+      throw new HttpException(
+        `Incident with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (incident.status === IncidentStatus.CLOSED) {
+      throw new HttpException(
+        'Cannot verify a closed incident',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (incident.status === IncidentStatus.VERIFIED) {
+      throw new HttpException(
+        'Incident is already verified',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updated = await this.prisma.incident.update({
+      where: { id },
+      data: { status: IncidentStatus.VERIFIED },
+    });
+
+    try {
+      await this.alertsService.generateAlertsForVerifiedIncident(updated.id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Incident ${updated.id} verified but alert generation failed: ${msg}`,
+      );
+    }
+
+    return updated;
   }
-
-  if (incident.status === IncidentStatus.CLOSED) {
-    throw new HttpException(
-      'Cannot verify a closed incident',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  if (incident.status === IncidentStatus.VERIFIED) {
-    throw new HttpException(
-      'Incident is already verified',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  return this.prisma.incident.update({
-    where: { id },
-    data: { status: IncidentStatus.VERIFIED },
-  });
-}
 
   async close(id: string) {
-  const incident = await this.prisma.incident.findUnique({
-    where: { id },
-  });
+    const incident = await this.prisma.incident.findUnique({
+      where: { id },
+    });
 
-  if (!incident) {
-    throw new HttpException(
-      `Incident with id ${id} not found`,
-      HttpStatus.NOT_FOUND,
-    );
+    if (!incident) {
+      throw new HttpException(
+        `Incident with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (incident.status === IncidentStatus.CLOSED) {
+      throw new HttpException(
+        'Incident is already closed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return this.prisma.incident.update({
+      where: { id },
+      data: { status: IncidentStatus.CLOSED },
+    });
   }
-
-  if (incident.status === IncidentStatus.CLOSED) {
-    throw new HttpException(
-      'Incident is already closed',
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  return this.prisma.incident.update({
-    where: { id },
-    data: { status: IncidentStatus.CLOSED },
-  });
-}
 
   async update(id: string, data: any) {
     if (

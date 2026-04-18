@@ -123,6 +123,26 @@ async function bootstrap() {
     res.redirect('/gui');
   });
   httpApp.get('/gui', (_req: unknown, res: Response) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'none'",
+        "base-uri 'none'",
+        "frame-ancestors 'none'",
+        "form-action 'self'",
+        "connect-src 'self'",
+        "img-src 'self' data:",
+        "font-src 'self' data:",
+        "style-src 'self' 'unsafe-inline'",
+        "script-src 'self' 'unsafe-inline'",
+      ].join('; '),
+    );
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=(), payment=()',
+    );
     res.type('html').send(appService.getGuiHtml());
   });
 

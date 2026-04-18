@@ -14,11 +14,8 @@ export class ExternalController {
     summary: 'Get weather by coordinates',
     description: '**Access:** `public`',
   })
-  getWeather(@Query() query: WeatherQueryDto) {
-    return this.externalService.getWeather(
-      Number(query.lat),
-      Number(query.lng),
-    );
+  async getWeather(@Query() query: WeatherQueryDto) {
+    return this.externalService.getWeather(Number(query.lat), Number(query.lng));
   }
 
   @Post('route-preview')
@@ -26,7 +23,7 @@ export class ExternalController {
     summary: 'Get basic route preview',
     description: '**Access:** `public`',
   })
-  getRoutePreview(@Body() dto: RoutePreviewDto) {
+  async getRoutePreview(@Body() dto: RoutePreviewDto) {
     return this.externalService.getRoutePreview(dto.origin, dto.destination);
   }
 }

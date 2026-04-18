@@ -11,6 +11,31 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wasel_palestine']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: wasel_api
+    restart: unless-stopped
+    # Host port configurable when 3000 is already taken (e.g. local `npm run dev`).
+    ports:
+      - "${DOCKER_API_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:1234@db:5432/wasel_palestine?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
+      EXTERNAL_HTTP_TIMEOUT_MS: ${EXTERNAL_HTTP_TIMEOUT_MS:-10000}
+      WEATHER_CACHE_TTL_SEC: ${WEATHER_CACHE_TTL_SEC:-600}
+      ROUTE_CACHE_TTL_SEC: ${ROUTE_CACHE_TTL_SEC:-300}
+      EXTERNAL_OUTBOUND_RPM: ${EXTERNAL_OUTBOUND_RPM:-60}
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_data: {}

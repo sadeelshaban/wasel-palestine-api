@@ -19,7 +19,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "export:openapi": "tsx scripts/export-openapi.ts",
+    "export:openapi:http": "node scripts/fetch-openapi.mjs",
+    "perf:sample": "k6 run --vus 5 --duration 10s performance/read-heavy.js",
+    "docs:erd": "npx -y @mermaid-js/mermaid-cli -i docs/ERD.mmd -o docs/ERD.png -b white"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -68,6 +72,9 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
+  "overrides": {
+    "@hono/node-server": "1.19.13"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
@@ -75,6 +82,9 @@
       "ts"
     ],
     "rootDir": "src",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    },
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

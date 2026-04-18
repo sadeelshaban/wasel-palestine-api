@@ -1,0 +1,129 @@
+%% Entity-relationship view derived from prisma/schema.prisma (course ERD deliverable).
+%% Render: npx -y @mermaid-js/mermaid-cli@11 -i docs/ERD.mmd -o docs/ERD.png -b transparent
+erDiagram
+  User ||--o{ RefreshToken : has
+  User ||--o{ PasswordResetToken : has
+  User ||--o{ Report : submits
+  User ||--o{ Vote : casts
+  User ||--o{ Flag : raises
+  User ||--o{ Subscription : owns
+  User ||--o{ Alert : receives
+
+  Checkpoint ||--o{ CheckpointStatusHistory : tracks
+  Checkpoint ||--o{ Incident : links
+
+  Incident ||--o{ Alert : notifies
+
+  Report ||--o{ Vote : has
+  Report ||--o{ Flag : has
+
+  User {
+    uuid id PK
+    string email UK
+    string password
+    string firstName
+    string lastName
+    enum role
+    boolean isBlocked
+    datetime createdAt
+  }
+
+  Checkpoint {
+    uuid id PK
+    string name
+    float latitude
+    float longitude
+    enum status
+    datetime createdAt
+  }
+
+  CheckpointStatusHistory {
+    uuid id PK
+    uuid checkpointId FK
+    enum status
+    datetime createdAt
+  }
+
+  Incident {
+    uuid id PK
+    string type
+    enum severity
+    enum status
+    string description
+    float latitude
+    float longitude
+    uuid checkpointId FK
+    datetime createdAt
+  }
+
+  Report {
+    uuid id PK
+    uuid userId FK
+    string category
+    string description
+    float latitude
+    float longitude
+    enum status
+    float credibilityScore
+    datetime createdAt
+  }
+
+  Vote {
+    uuid id PK
+    uuid userId FK
+    uuid reportId FK
+    enum voteType
+    datetime createdAt
+  }
+
+  Flag {
+    uuid id PK
+    uuid userId FK
+    uuid reportId FK
+    string reason
+    datetime createdAt
+  }
+
+  Subscription {
+    uuid id PK
+    uuid userId FK
+    float latitude
+    float longitude
+    int radiusMeters
+    string category
+    datetime createdAt
+  }
+
+  Alert {
+    uuid id PK
+    uuid userId FK
+    uuid incidentId FK
+    string message
+    boolean isRead
+    datetime createdAt
+  }
+
+  AuditLog {
+    uuid id PK
+    uuid actorUserId
+    string actorEmail
+    string action
+    string entityType
+    string entityId
+    json metadata
+    datetime createdAt
+  }
+
+  RefreshToken {
+    uuid id PK
+    uuid userId FK
+    string tokenHash UK
+    datetime expiresAt
+  }
+
+  PasswordResetToken {
+    uuid id PK
+    uuid userId FK
+    string tokenHash UK
+    datetime expiresAt
+  }

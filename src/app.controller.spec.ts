@@ -8,15 +8,24 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [
+        {
+          provide: AppService,
+          useValue: {
+            getGuiHtml: () => '<html></html>',
+          },
+        },
+      ],
     }).compile();
 
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  it('should redirect root to /gui', () => {
+    expect(appController.getRoot()).toEqual({ url: '/gui' });
+  });
+
+  it('should return GUI HTML', () => {
+    expect(appController.getGui()).toContain('html');
   });
 });
