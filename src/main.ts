@@ -10,6 +10,7 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AppModule } from './app.module';
+import { AppService } from './app.service';
 
 dotenv.config({ path: '.env', override: true });
 
@@ -115,6 +116,16 @@ async function bootstrap() {
   });
 
   const httpApp = app.getHttpAdapter().getInstance();
+  const appService = app.get(AppService);
+
+  // Keep the GUI reachable on root paths, independent of /api/v1 prefix.
+  httpApp.get('/', (_req: unknown, res: Response) => {
+    res.redirect('/gui');
+  });
+  httpApp.get('/gui', (_req: unknown, res: Response) => {
+    res.type('html').send(appService.getGuiHtml());
+  });
+
   httpApp.get('/openapi.json', (_req: unknown, res: Response) => {
     res.json(document);
   });
