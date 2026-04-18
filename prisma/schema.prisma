@@ -76,8 +76,6 @@ enum CheckpointStatus {
   UNKNOWN
 }
 
-
-
 model Checkpoint {
   id        String   @id @default(uuid())
   name      String
@@ -98,7 +96,6 @@ model CheckpointStatusHistory {
 
   checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
 }
-
 
 enum IncidentStatus {
   OPEN
@@ -121,22 +118,21 @@ model Incident {
   latitude     Float
   longitude    Float
   checkpointId String?
-
-  createdAt DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   checkpoint Checkpoint? @relation(fields: [checkpointId], references: [id])
   alerts     Alert[]
 }
 
 model Subscription {
-  id          String   @id @default(uuid())
-  userId      String
-  latitude    Float
-  longitude   Float
-  radiusMeters Int     @default(1000)
-  category    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  userId       String
+  latitude     Float
+  longitude    Float
+  radiusMeters Int      @default(1000)
+  category     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -166,9 +162,9 @@ model Alert {
 
 enum ReportStatus {
   PENDING
+  UNDER_REVIEW
   APPROVED
   REJECTED
-  UNDER_REVIEW
 }
 
 enum VoteType {
@@ -177,16 +173,16 @@ enum VoteType {
 }
 
 model Report {
-  id          String       @id @default(uuid())
-  userId      String
-  category    String
-  description String
-  latitude    Float
-  longitude   Float
-  status      ReportStatus @default(PENDING)
-  credibilityScore Float    @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id               String       @id @default(uuid())
+  userId           String
+  category         String
+  description      String
+  latitude         Float
+  longitude        Float
+  status           ReportStatus @default(PENDING)
+  credibilityScore Float        @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   votes Vote[]
@@ -200,10 +196,10 @@ model Report {
 }
 
 model Vote {
-  id       String   @id @default(uuid())
-  userId   String
-  reportId String
-  voteType VoteType
+  id        String   @id @default(uuid())
+  userId    String
+  reportId  String
+  voteType  VoteType
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -215,10 +211,10 @@ model Vote {
 }
 
 model Flag {
-  id       String   @id @default(uuid())
-  userId   String
-  reportId String
-  reason   String
+  id        String   @id @default(uuid())
+  userId    String
+  reportId  String
+  reason    String
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
