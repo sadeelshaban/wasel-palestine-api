@@ -1,257 +1,169 @@
-# 🚀 Wasel Palestine - Smart Mobility Platform
+# Wasel Palestine API
 
-**Advanced Software Engineering - Spring 2026**  
-**Dr. Amjad AbuHassan**
+Course project (Advanced Software Engineering, Spring 2026)  
+Instructor: Dr. Amjad AbuHassan
 
-A RESTful API-centric smart mobility platform designed to support Palestinians in navigating daily movement challenges by providing structured, reliable, and up-to-date mobility intelligence.
+Wasel Palestine is a backend-first smart mobility and checkpoint intelligence platform. It exposes versioned REST APIs that clients (mobile apps, dashboards, or integrations) can consume to work with checkpoints, incidents, community reports, route estimation, alerts, and curated external context (for example weather and routing helpers).
 
-## 🎯 Project Overview
+This repository implements the **backend** for that platform. The official coursework scope emphasizes API design, persistence, security, integrations, testing, and performance analysis. Any lightweight HTML operator console shipped in this repo is a **non-required convenience** for demonstrations and manual operations; it is not a substitute for the primary API documentation and testing workflow.
 
-Wasel Palestine aggregates data related to road conditions, checkpoints, traffic incidents, and environmental factors, exposing this information through a well-defined backend API that can be consumed by mobile applications, web dashboards, or third-party systems.
+## Why NestJS (technology justification)
 
-## 🏗️ Technology Stack
+NestJS is used as the implementation framework because it aligns well with the non-functional goals stated in the coursework documentation:
 
-- **Backend:** NestJS (Node.js + TypeScript)
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** JWT (Access + Refresh Tokens)
-- **Containerization:** Docker & Docker Compose
-- **API Documentation:** Swagger/OpenAPI
-- **Testing:** Jest + k6 (Performance Testing)
+- **Maintainability and structure**: module boundaries, dependency injection, and conventions reduce accidental coupling as the API surface grows.
+- **Security ergonomics**: middleware/guards patterns map cleanly to authentication, authorization, and audit-friendly request handling.
+- **Operational readiness**: structured logging hooks, configuration patterns, and first-class OpenAPI support help keep documentation close to the running system.
+- **Team scalability**: clear module ownership boundaries match a multi-contributor backend where features evolve in parallel.
 
-## 🚀 Quick Start
+## Course requirements mapping (high level)
 
-### Prerequisites
-- Node.js 18+
-- Docker & Docker Compose
+This project is designed to satisfy the backend requirements described in the course specification, including:
+
+- **Relational database** using PostgreSQL, accessed through **Prisma** (ORM) and backed by migrations under `prisma/migrations`.
+- **Versioned APIs** under `/api/v1/...` for application endpoints.
+- **JWT authentication** with access and refresh token flows (see Authentication module).
+- **Docker** support for local deployment via `docker-compose.yml`.
+- **External integrations** implemented as dedicated modules with defensive handling (timeouts and pragmatic error behavior; see External module).
+- **Performance evaluation** using **k6** scripts under `performance/` (run separately; k6 is not a Node dependency).
+
+Primary API documentation for coursework deliverables should be maintained in **API Dog** using the exported OpenAPI document from a running service.
+
+## Architecture documentation
+
+For a structured architecture narrative, diagrams, and ERD-oriented notes, see:
+
+- `ARCHITECTURE_DIAGRAM.md`
+
+## Technology stack
+
+- **Runtime**: Node.js
+- **Framework**: NestJS (TypeScript)
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Auth**: JWT access tokens and refresh token rotation (implementation details in Auth module)
+- **HTTP documentation**: Swagger UI + OpenAPI JSON served by the application
+- **Containerization**: Docker Compose for PostgreSQL (and optional app containerization depending on your deployment approach)
+
+## Repository layout (practical)
+
+- `src/` NestJS application code (modules, controllers, services)
+- `prisma/` Prisma schema, migrations, seed script
+- `performance/` k6 load test scripts
+- `swagger/` Swagger UI theme overrides
+- `test/` automated tests (Jest)
+
+## Prerequisites
+
+- Node.js 18 or newer
+- Docker Desktop (or compatible Docker engine) and Docker Compose
 - Git
 
-### Setup
+Optional:
+
+- k6 (for running performance scenarios locally)
+
+## Local development setup
+
+Clone the repository, install dependencies, configure environment variables, start PostgreSQL, apply migrations, generate the Prisma client, seed baseline data (if used in your environment), then start the API.
+
 ```bash
-# Clone repository
-git clone https://github.com/your-team/wasel-palestine-api.git
+git clone https://github.com/sadeelshaban/wasel-palestine-api.git
 cd wasel-palestine-api
 
-# Install dependencies
 npm install
 
-# Setup environment
-cp .env.example .env
-# Edit .env with your configuration
+copy .env.example .env
+# Edit .env to match your local PostgreSQL connection settings.
 
-# Start database
-docker-compose up -d
+docker compose up -d
 
-# Run database migrations
-npx prisma migrate dev --name init_full_system
-
-# Generate Prisma client
+npx prisma migrate dev
 npx prisma generate
 
-# Seed admin user
 npm run db:seed
 
-# Start development server
 npm run dev
 ```
 
-### Default Admin User
+Notes:
+
+- Use `cp` instead of `copy` on Unix-like shells.
+- The exact migration name is not important for local development; `prisma migrate dev` will apply pending migrations.
+
+## Default administrator account (seed)
+
+If your database is seeded using the provided seed workflow, a default administrator may exist. Treat this as a **development default** and rotate credentials for any shared or public environment.
+
 - Email: `admin@wasel.local`
 - Password: `ChangeMeAdmin123!`
 
-## 📚 API Documentation
+## Running the service
 
-- **Swagger UI:** `http://localhost:3000/api`
-- **Production Endpoints:** `/api/v1/...`
-- **Authentication:** Bearer Token (JWT)
+Development:
 
-## 👥 Team Structure & Responsibilities
-
-### 🏛️ Member 1: Infrastructure & Users Lead ✅
-**Completed Features:**
-- ✅ NestJS architecture setup
-- ✅ Docker + PostgreSQL integration
-- ✅ Authentication system (5 endpoints)
-- ✅ User management (6 endpoints)
-- ✅ System utilities (2 endpoints)
-- ✅ Audit logging system
-- ✅ API documentation foundation
-
-**Endpoints Delivered:**
-- Authentication: Register, Login, Refresh, Change Password, Forgot/Reset Password
-- Users: Profile (GET/PATCH), Admin Controls (CRUD), Block/Delete
-- System: Health Check, Audit Logs
-
----
-
-### 🛣️ Member 2: Road Incidents & Checkpoint Management
-**Planned Features:**
-- Checkpoint registry with status history
-- Incident categorization (closure, delay, accident, weather)
-- Authorized user moderation workflow
-- Filtering, sorting, and pagination
-
-**Endpoints to Implement:**
-```
-POST /api/v1/checkpoints
-GET /api/v1/checkpoints (paginated, filtered)
-PUT /api/v1/checkpoints/:id
-DELETE /api/v1/checkpoints/:id
-POST /api/v1/incidents
-GET /api/v1/incidents
-PUT /api/v1/incidents/:id
-```
-
----
-
-### 📢 Member 3: Crowdsourced Reporting System
-**Planned Features:**
-- Citizen report submission
-- Geographic location & categorization
-- Validation & abuse prevention
-- Duplicate detection
-- Community credibility scoring
-
-**Endpoints to Implement:**
-```
-POST /api/v1/reports
-GET /api/v1/reports
-PUT /api/v1/reports/:id/moderate
-GET /api/v1/reports/duplicates
-```
-
----
-
-### 🧠 Member 4: Route Intelligence & Alerts
-**Planned Features:**
-- Route estimation with metadata
-- Constraint-based routing (avoid checkpoints/areas)
-- Alert subscription system
-- External API integration (OpenStreetMap, Weather)
-
-**Endpoints to Implement:**
-```
-GET /api/v1/routes/estimate
-POST /api/v1/alerts/subscribe
-GET /api/v1/alerts/user/:userId
-GET /api/v1/external/weather
-GET /api/v1/external/geocoding
-```
-
-## 🗄️ Database Schema
-
-### Core Models
-- **User:** Authentication & role management
-- **Checkpoint:** Geographic mobility points
-- **Incident:** Road events & disruptions
-- **Report:** Crowdsourced submissions
-- **Alert:** User notification preferences
-- **AuditLog:** System activity tracking
-
-## 🔐 Authentication Flow
-
-1. **Register:** Create account → Receive tokens
-2. **Login:** Email/password → JWT access + refresh tokens
-3. **Refresh:** Use refresh token → New access token
-4. **Authorization:** Role-based access control (USER/ADMIN)
-
-## 📊 Performance Testing
-
-### Required Scenarios (k6)
-- Read-heavy workloads (incident listing)
-- Write-heavy workloads (report submissions)
-- Mixed workloads
-- Spike testing
-- Sustained load (soak testing)
-
-### Metrics to Track
-- Average response time
-- P95 latency
-- Throughput
-- Error rate
-- Bottleneck identification
-
-## 🔧 Development Workflow
-
-### Git Workflow
 ```bash
-# Create feature branch
-git checkout -b feature/your-feature-name
-
-# Make changes & commit
-git add .
-git commit -m "feat: add your feature description"
-
-# Push & create PR
-git push origin feature/your-feature-name
-# Create Pull Request on GitHub
+npm run dev
 ```
 
-### Branch Naming Convention
-- `feature/endpoint-name`
-- `fix/bug-description`
-- `docs/documentation-updates`
-- `test/performance-tests`
+Production-style entrypoint (as configured in this repo):
 
-## 📝 API Documentation Standards
-
-### Required Documentation (API-Dog)
-- Endpoint descriptions
-- Authentication flows
-- Request/response schemas
-- Error formats
-- Environment configurations
-
-## 🚀 Deployment
-
-### Docker Deployment
 ```bash
-# Build production image
-docker build -t wasel-api .
-
-# Run with environment
-docker run -p 3000:3000 --env-file .env wasel-api
+npm run start:prod
 ```
 
-### Environment Variables
+Default port: `3000` (override with `PORT` in `.env`).
+
+## API surface and documentation
+
+Application endpoints are served under:
+
+- `/api/v1/...`
+
+Operational and documentation endpoints (not under `/api/v1`):
+
+- `GET /health` health probe
+- `GET /api-docs` Swagger UI
+- `GET /openapi.json` OpenAPI document (recommended import source for API Dog)
+- `GET /gui` optional operator console (demo utility)
+
+Authenticate protected operations using:
+
+`Authorization: Bearer <access_token>`
+
+## Testing
+
+Unit and integration tests (Jest):
+
 ```bash
-NODE_ENV=production
-DATABASE_URL="postgresql://..."
-JWT_SECRET="your-secret-key"
-JWT_ACCESS_EXPIRES_SECS=900
+npm test
 ```
 
-## 📋 Project Deliverables
+End-to-end tests (if you run them in your environment):
 
-### ✅ Completed
-- [x] Infrastructure setup
-- [x] Authentication system
-- [x] User management
-- [x] Database schema
-- [x] API documentation foundation
+```bash
+npm run test:e2e
+```
 
-### 🚧 In Progress
-- [ ] Road incidents module
-- [ ] Crowdsourcing system
-- [ ] Route intelligence
-- [ ] External API integrations
-- [ ] Performance testing
-- [ ] Complete documentation
+Performance tests (k6):
 
-## 📞 Support & Communication
+- See scripts in `performance/`
+- Run k6 using your platform installation; the scripts are not executed by `npm test` automatically.
 
-### Team Communication
-- **Code Reviews:** Required for all PRs
-- **Standups:** Daily progress updates
-- **Documentation:** Keep README and API docs updated
+## Version control expectations
 
-### Getting Help
-1. Check `API_HANDOVER.md` for detailed API documentation
-2. Review existing code patterns in `src/modules/`
-3. Consult project requirements document
-4. Contact Infrastructure Lead for authentication/database issues
+The coursework requires traceable engineering practice:
 
----
+- Work on feature branches
+- Merge via pull requests into `main`
+- Use clear, conventional commit messages
 
-**🎯 Deadline: April 17, 2026**
+## Security notes (operational)
 
-*Built with ❤️ by the Advanced Software Engineering Team*
+- Never commit real `.env` secrets.
+- Treat JWT secrets as sensitive configuration.
+- For shared demo environments, disable or rotate default seeded credentials.
+
+## License
+
+See repository settings for license terms (if applicable).
