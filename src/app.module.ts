@@ -1,3 +1,5 @@
+import { ExternalModule } from './external/external.module';
+import { RouteEstimationModule } from './route-estimation/route-estimation.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -5,6 +7,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { CheckpointsModule } from './modules/checkpoints/checkpoints.module';
+import { IncidentsModule } from './modules/incidents/incidents.module';
+import { ReportsModule } from './reports/reports.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -12,6 +18,12 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     AdminModule,
+    CheckpointsModule,
+    IncidentsModule,
+    ReportsModule,
+    AlertsModule,
+    ExternalModule,
+    RouteEstimationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
