@@ -13,7 +13,9 @@ API Dog workflow
 3. Import environment.local.json (or create an environment with the same keys).
 4. Document authentication: Bearer access token from POST /api/v1/auth/login; set it on secured requests.
 5. Add your own API Dog “test” steps and examples per endpoint (request/response/error shapes).
-6. Export the API Dog **collection** and **environment** from API Dog and save the exported files here alongside these, using names your instructor expects (e.g. wasel-api-dog.json).
+6. Export the API Dog **collection** and **environment** from API Dog and save the exported files here alongside these, using names your instructor expects (e.g. wasel-palestine-api-dog-collection.json + wasel-palestine-api-dog-environment.json).
+
+After import (step 2): skim the sidebar and confirm **tags / folders** look orderly (controllers map to NestJS @ApiTags). If the grader is strict about “documentation must come from API Dog itself”, the native export in step 6 is what closes that gap; openapi.json alone is still the canonical machine-readable spec.
 
 Refresh OpenAPI after code changes
 -----------------------------------

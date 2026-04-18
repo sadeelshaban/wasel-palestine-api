@@ -97,11 +97,30 @@ Notes:
 
 ## Run database and API with Docker Compose
 
-This runs PostgreSQL and the API container (migrations run automatically before the server starts). Set a strong `JWT_SECRET` in your environment when using this in shared settings.
+This runs PostgreSQL and the API container (migrations run automatically before the server starts).
 
 ```bash
 docker compose up --build
 ```
+
+### JWT secret and `.env` with Docker
+
+Docker Compose reads the **project-root** `.env` file (create it from `.env.example` if you do not have one yet). The `api` service receives `JWT_SECRET` from that file: see `JWT_SECRET: ${JWT_SECRET:-...}` in `docker-compose.yml`. Without a real secret, Compose falls back to a **development-only** placeholder; for coursework demos, shared machines, or anything beyond a throwaway local run, **set `JWT_SECRET` yourself** so tokens are not predictable.
+
+1. Copy `.env.example` to `.env` in the repository root (same folder as `docker-compose.yml`).
+2. Set `JWT_SECRET` to a long random string (at least 32 bytes of entropy is a reasonable target). Example using Node (works on Windows, macOS, and Linux):
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+   Paste the output into `.env` as the value of `JWT_SECRET` (keep quotes if your value contains characters that need them).
+
+3. Leave **`DATABASE_URL` in `.env` for local Node** pointing at `localhost` if you use `npm run dev` against the Compose database. The **`api` container ignores that URL for DB access**: Compose injects an internal URL that reaches the `db` service (`postgresql://postgres:1234@db:5432/...`).
+
+4. Run `docker compose up --build` again after changing `.env` so the API container picks up the new secret.
+
+Never commit `.env`; only `.env.example` belongs in Git.
 
 The API listens on **`http://localhost:3000`** by default. If you see `bind: ... 3000 ... already permitted`, something else is using port 3000 (often a local `npm run dev`). Either stop that process or set **`DOCKER_API_PORT=3001`** in `.env` and open **`http://localhost:3001`** instead (see `.env.example`).
 
@@ -189,6 +208,18 @@ npm run export:openapi:http
 ```
 
 Outputs go to `delivery/api-dog/openapi.json` (see `delivery/api-dog/INSTRUCTIONS.txt`).
+
+## API Dog (one-time checklist before submission)
+
+The repository already ships **`delivery/api-dog/openapi.json`** (refresh with `npm run export:openapi` or `npm run export:openapi:http` when the API changes). For coursework, do this **once** in API Dog so documentation matches what graders see:
+
+1. Start the API (`npm run dev` or `docker compose up --build`) and confirm **`DATABASE_URL`** and **`JWT_SECRET`** are set in `.env` so login works.
+2. In **API Dog**: **Import → OpenAPI** → choose `delivery/api-dog/openapi.json`, or import from **`http://localhost:3000/openapi.json`** (use the correct host port if you set `DOCKER_API_PORT` or `PORT`).
+3. Open the imported spec and confirm **endpoints are grouped sensibly** (NestJS tags from controllers should appear as sections in the tool).
+4. Import **`delivery/api-dog/environment.local.json`** (or recreate the same variables), then call **`POST /api/v1/auth/login`** and set the returned access token on secured requests (Bearer).
+5. If the instructor expects a **native API Dog export** (not only OpenAPI), use **Export** inside API Dog for the **collection** and **environment**, and save the files under `delivery/api-dog/` using the names your brief requires (for example `wasel-palestine-api-dog-collection.json` plus a matching environment export). Keep **`openapi.json`** updated for reviewers who prefer the raw spec.
+
+Step-by-step notes for the folder live in **`delivery/api-dog/INSTRUCTIONS.txt`**.
 
 ## Version control expectations
 
