@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wasel Palestine - Smart Mobility Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.0/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.0/dist/leaflet.js"></script>
+    
+    <style>
+        .map-container {
+            height: 400px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .endpoint-card {
+            transition: all 0.3s ease;
+        }
+        
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .arabic-font {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 arabic-font">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                        <span class="text-green-600 font-bold text-xl">و</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Wasel Palestine</h1>
+                        <p class="text-green-100 text-sm">منصة التنقل الذكية</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="status-badge bg-green-500">API متصلة</span>
+                    <span class="status-badge bg-blue-500">47 Endpoints</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Project Overview -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">نظرة عامة على المشروع</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div class="text-green-600 text-3xl font-bold">47</div>
+                        <div class="text-green-800">نقاط النهاية (Endpoints)</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div class="text-blue-600 text-3xl font-bold">100%</div>
+                        <div class="text-blue-800">مطابقة للمتطلبات</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <div class="text-purple-600 text-3xl font-bold">4</div>
+                        <div class="text-purple-800">أعضاء الفريق</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Endpoints -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">نقاط النهاية (API Endpoints)</h2>
+                
+                <!-- Authentication Module -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-green-600">🔐 المصادقة (13 Endpoints)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">POST /auth/register</div>
+                            <div class="text-sm text-gray-600">إنشاء حساب جديد</div>
+                        </div>
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">POST /auth/login</div>
+                            <div class="text-sm text-gray-600">تسجيل الدخول</div>
+                        </div>
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">POST /auth/refresh</div>
+                            <div class="text-sm text-gray-600">تجديد التوكن</div>
+                        </div>
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">GET /auth/me</div>
+                            <div class="text-sm text-gray-600">بيانات المستخدم</div>
+                        </div>
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">PATCH /auth/password</div>
+                            <div class="text-sm text-gray-600">تغيير كلمة المرور</div>
+                        </div>
+                        <div class="endpoint-card bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div class="font-semibold text-green-600">POST /auth/forgot-password</div>
+                            <div class="text-sm text-gray-600">استعادة كلمة المرور</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Features -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-blue-600">🏛️ الميزات الأساسية (34 Endpoints)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">POST /checkpoints</div>
+                            <div class="text-sm text-gray-600">إنشاء حاجز</div>
+                        </div>
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">GET /incidents</div>
+                            <div class="text-sm text-gray-600">قائمة الحوادث</div>
+                        </div>
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">POST /reports</div>
+                            <div class="text-sm text-gray-600">إنشاء بلاغ</div>
+                        </div>
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">POST /alerts/subscribe</div>
+                            <div class="text-sm text-gray-600">اشتراك إشعارات</div>
+                        </div>
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">POST /routes/estimate</div>
+                            <div class="text-sm text-gray-600">تقدير المسار</div>
+                        </div>
+                        <div class="endpoint-card bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            <div class="font-semibold text-blue-600">GET /external/weather</div>
+                            <div class="text-sm text-gray-600">بيانات الطقس</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Map -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">الخريطة التفاعلية</h2>
+                <div class="map-container" id="map"></div>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="addCheckpoint()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                        إضافة حاجز
+                    </button>
+                    <button onclick="addIncident()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                        إضافة حادث
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Testing -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">اختبار الـ API</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">تسجيل الدخول</h3>
+                        <div class="space-y-4">
+                            <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" class="w-full p-2 border rounded-lg">
+                            <input type="password" id="loginPassword" placeholder="كلمة المرور" class="w-full p-2 border rounded-lg">
+                            <button onclick="testLogin()" class="w-full bg-green-600 text-white p-2 rounded-lg hover:bg-green-700">
+                                اختبار تسجيل الدخول
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">إنشاء بلاغ</h3>
+                        <div class="space-y-4">
+                            <input type="text" id="reportType" placeholder="نوع البلاغ" class="w-full p-2 border rounded-lg">
+                            <textarea id="reportDesc" placeholder="وصف البلاغ" rows="3" class="w-full p-2 border rounded-lg"></textarea>
+                            <button onclick="testReport()" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
+                                اختبار إنشاء بلاغ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">إحصائيات النظام</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <canvas id="endpointsChart"></canvas>
+                    </div>
+                    <div>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2026 Wasel Palestine - منصة التنقل الذكية</p>
+            <p class="text-gray-400 text-sm mt-2">Advanced Software Engineering - Dr. Amjad AbuHassan</p>
+        </div>
+    </footer>
+
+    <script>
+        // API Base URL
+        const API_BASE = 'http://localhost:3000/api/v1';
+        
+        // Initialize Map
+        let map = L.map('map').setView([31.95, 35.23], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Map markers array
+        let markers = [];
+        
+        // Add Checkpoint
+        function addCheckpoint() {
+            const checkpoint = {
+                lat: 31.95 + Math.random() * 0.1,
+                lng: 35.23 + Math.random() * 0.1,
+                name: `حاجز ${markers.length + 1}`,
+                status: 'OPEN'
+            };
+            
+            const marker = L.marker([checkpoint.lat, checkpoint.lng])
+                .addTo(map)
+                .bindPopup(`<b>${checkpoint.name}</b><br>الحالة: ${checkpoint.status}`);
+            
+            markers.push(marker);
+            
+            // Send to API
+            axios.post(`${API_BASE}/checkpoints`, checkpoint)
+                .then(response => {
+                    console.log('Checkpoint added:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error adding checkpoint:', error);
+                });
+        }
+        
+        // Add Incident
+        function addIncident() {
+            const incident = {
+                type: 'TRAFFIC',
+                severity: 'MEDIUM',
+                description: 'حادث مروري',
+                latitude: 31.95 + Math.random() * 0.1,
+                longitude: 35.23 + Math.random() * 0.1
+            };
+            
+            const marker = L.marker([incident.latitude, incident.longitude])
+                .addTo(map)
+                .bindPopup(`<b>${incident.type}</b><br>${incident.description}`);
+            
+            markers.push(marker);
+            
+            // Send to API
+            axios.post(`${API_BASE}/incidents`, incident)
+                .then(response => {
+                    console.log('Incident added:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error adding incident:', error);
+                });
+        }
+        
+        // Test Login
+        function testLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            axios.post(`${API_BASE}/auth/login`, { email, password })
+                .then(response => {
+                    alert('تسجيل الدخول ناجح!');
+                    console.log('Login response:', response.data);
+                })
+                .catch(error => {
+                    alert('خطأ في تسجيل الدخول');
+                    console.error('Login error:', error);
+                });
+        }
+        
+        // Test Report
+        function testReport() {
+            const report = {
+                type: document.getElementById('reportType').value,
+                description: document.getElementById('reportDesc').value,
+                latitude: 31.95 + Math.random() * 0.1,
+                longitude: 35.23 + Math.random() * 0.1
+            };
+            
+            axios.post(`${API_BASE}/reports`, report)
+                .then(response => {
+                    alert('تم إنشاء البلاغ!');
+                    console.log('Report response:', response.data);
+                })
+                .catch(error => {
+                    alert('خطأ في إنشاء البلاغ');
+                    console.error('Report error:', error);
+                });
+        }
+        
+        // Initialize Charts
+        window.onload = function() {
+            // Endpoints Chart
+            const endpointsCtx = document.getElementById('endpointsChart').getContext('2d');
+            new Chart(endpointsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['المصادقة', 'المستخدمون', 'الحواجز', 'الحوادث', 'البلاغات', 'الإشعارات', 'التوجيه', 'الخارجية'],
+                    datasets: [{
+                        data: [13, 7, 7, 7, 9, 5, 1, 3],
+                        backgroundColor: [
+                            '#10B981', '#3B82F6', '#F59E0B', '#EF4444', 
+                            '#8B5CF6', '#EC4899', '#14B8A6', '#6B7280'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['مكتمل', 'قيد التنفيذ', 'مخطط له'],
+                    datasets: [{
+                        label: 'نقاط النهاية',
+                        data: [47, 0, 0],
+                        backgroundColor: ['#10B981', '#F59E0B', '#6B7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

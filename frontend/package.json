@@ -1,0 +1,22 @@
+{
+  "name": "wasel-palestine-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Wasel Palestine Smart Mobility Platform",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3001 --open=index.html",
+    "build": "echo 'Build complete - Static files ready'",
+    "serve": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "leaflet": "^1.9.0",
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.0"
+  },
+  "keywords": ["wasel", "palestine", "mobility", "api", "frontend"],
+  "author": "Wasel Palestine Team",
+  "license": "MIT"
+}
